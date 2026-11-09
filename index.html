@@ -1,0 +1,1765 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Phytomedix | Bio-OS v32.1</title>
+<!-- Pin the version. Add an integrity="sha384-..." attribute once you have copied the hash from jsDelivr. -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;700;800&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --forest:#1a3d2b; --green:#2e7d4f; --leaf:#4caf71; --mint:#e6f5ec;
+  --ink:#1a2332; --slate:#4a5568; --mist:#f7f9f8; --white:#ffffff;
+  --border:#e2e8e5; --red:#c53030; --amber:#d97706; --blue:#1d4ed8;
+  --improving:#2e7d4f; --stable:#1d4ed8; --declining:#c53030; --baseline:#6b7280;
+  --bioOs:#0F3460; --gold:#B8860B; --goldBg:#FFFBEB;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+*{-webkit-tap-highlight-color:transparent;}
+body{font-family:'Outfit',sans-serif;background:var(--mist);color:var(--ink);min-height:100vh;padding:20px 16px 40px;display:flex;flex-direction:column;align-items:center;overflow-x:hidden;}
+.site-header{width:100%;max-width:700px;display:flex;align-items:center;justify-content:space-between;padding:18px 0 24px;border-bottom:1px solid var(--border);margin-bottom:24px;}
+.logo-text{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:var(--forest);letter-spacing:1px;}
+.logo-sub{font-size:9px;font-family:'DM Mono',monospace;color:var(--green);letter-spacing:1px;display:block;}
+.header-right{display:flex;align-items:center;gap:10px;}
+.engine-badge{font-family:'DM Mono',monospace;font-size:9px;font-weight:500;color:var(--green);background:var(--mint);border:1px solid #b7d9c3;padding:4px 10px;border-radius:20px;letter-spacing:.6px;}
+.session-indicator{font-family:'DM Mono',monospace;font-size:9px;color:var(--green);background:var(--mint);border:1px solid #b7d9c3;padding:4px 10px;border-radius:20px;display:none;}
+.session-indicator.active{display:inline-flex;align-items:center;gap:5px;}
+.session-indicator::before{content:'●';font-size:8px;}
+.logout-btn{font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;color:var(--slate);background:none;border:1px solid var(--border);padding:5px 12px;border-radius:20px;cursor:pointer;transition:all .15s;display:none;}
+.logout-btn:hover{border-color:var(--slate);background:var(--mist);}
+.container{width:100%;max-width:700px;}
+.site-footer{width:100%;max-width:700px;margin-top:24px;font-size:11px;color:var(--slate);text-align:center;line-height:1.6;}
+
+/* AUTH */
+#loginScreen{width:100%;max-width:420px;margin:0 auto;animation:fadeUp .4s ease;}
+.login-card{background:var(--white);border-radius:20px;padding:36px 32px;box-shadow:0 4px 24px rgba(0,0,0,.08),0 0 0 1px var(--border);}
+.login-heading{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:var(--forest);margin-bottom:6px;text-align:center;}
+.login-sub{font-size:13px;color:var(--slate);margin-bottom:28px;text-align:center;line-height:1.6;}
+.login-field{margin-bottom:14px;}
+.login-field label{display:block;font-size:10px;font-weight:700;letter-spacing:.5px;color:var(--slate);text-transform:uppercase;margin-bottom:6px;}
+.login-field input{width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:10px;font-family:'Outfit',sans-serif;font-size:16px;color:var(--ink);background:var(--white);transition:border-color .15s;-webkit-appearance:none;min-height:48px;}
+.login-field input:focus{outline:none;border-color:var(--green);}
+.login-field input.error{border-color:var(--red);}
+.pin-hint{font-size:11px;color:var(--slate);margin-top:4px;opacity:.8;display:block;}
+.login-btn{width:100%;padding:15px;background:var(--forest);color:white;border:none;border-radius:12px;font-family:'Syne',sans-serif;font-size:15px;font-weight:700;cursor:pointer;transition:all .2s;min-height:52px;margin-top:6px;}
+.login-btn:hover{background:var(--green);transform:translateY(-1px);}
+.login-btn:disabled{opacity:.6;cursor:not-allowed;transform:none;}
+.login-error{background:#fff0f0;border:1px solid #fca5a5;border-radius:8px;padding:10px 13px;font-size:12px;color:var(--red);margin-top:12px;display:none;line-height:1.5;}
+.login-note{background:var(--mint);border:1px solid #c8e6d5;border-radius:8px;padding:10px 13px;font-size:11px;color:var(--forest);margin-top:16px;line-height:1.6;text-align:center;}
+.auth-switch-link{text-align:center;font-size:12px;color:var(--slate);margin-top:14px;}
+.auth-switch-link a{color:var(--green);font-weight:700;text-decoration:none;cursor:pointer;}
+
+/* REGISTER */
+#registerScreen{width:100%;max-width:460px;margin:0 auto;animation:fadeUp .4s ease;display:none;}
+.reg-card{background:var(--white);border-radius:20px;padding:36px 32px;box-shadow:0 4px 24px rgba(0,0,0,.08),0 0 0 1px var(--border);margin-bottom:16px;}
+.reg-steps{display:flex;align-items:center;gap:0;margin-bottom:26px;padding:0 4px;}
+.reg-step{display:flex;flex-direction:column;align-items:center;gap:5px;flex:1;position:relative;}
+.reg-step:not(:last-child)::after{content:'';position:absolute;top:13px;left:50%;width:100%;height:2px;background:var(--border);z-index:0;}
+.reg-step.done:not(:last-child)::after{background:var(--green);}
+.reg-step .step-dot{width:28px;height:28px;border-radius:50%;border:2px solid var(--border);background:var(--white);color:var(--slate);display:flex;align-items:center;justify-content:center;font-family:'DM Mono',monospace;font-size:11px;z-index:1;position:relative;flex-shrink:0;}
+.reg-step.active .step-dot{border-color:var(--green);background:var(--green);color:white;}
+.reg-step.done .step-dot{border-color:var(--green);background:var(--green);color:white;}
+.reg-step.done .step-dot::after{content:'✓';font-size:12px;}
+.reg-step.done .step-dot span{display:none;}
+.reg-step-label{font-size:9px;font-weight:600;letter-spacing:.4px;text-transform:uppercase;color:var(--slate);}
+.reg-step.active .reg-step-label{color:var(--green);}
+.reg-step.done .reg-step-label{color:var(--forest);}
+.reg-panel{display:none;}
+.reg-panel.active{display:block;animation:fadeUp .25s ease;}
+.reg-panel-heading{font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:var(--forest);margin-bottom:4px;}
+.reg-panel-sub{font-size:13px;color:var(--slate);margin-bottom:20px;line-height:1.55;}
+.reg-field{margin-bottom:14px;}
+.reg-field label{display:block;font-size:10px;font-weight:700;letter-spacing:.5px;color:var(--slate);text-transform:uppercase;margin-bottom:6px;}
+.reg-field input{width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:10px;font-family:'Outfit',sans-serif;font-size:16px;color:var(--ink);background:var(--white);transition:border-color .15s;min-height:48px;}
+.reg-field input:focus{outline:none;border-color:var(--green);}
+.reg-field input.error{border-color:var(--red);}
+.reg-field input.success{border-color:var(--leaf);}
+.reg-field .reg-hint{font-size:11px;color:var(--slate);margin-top:4px;opacity:.8;display:block;}
+.pin-strength-bar{height:3px;background:var(--border);border-radius:2px;margin:6px 0 3px;overflow:hidden;}
+.pin-strength-fill{height:100%;border-radius:2px;width:0;transition:width .3s,background .3s;}
+.pin-strength-text{font-size:10px;font-weight:600;}
+.pin-strength-text.weak{color:var(--red);}
+.pin-strength-text.medium{color:var(--amber);}
+.pin-strength-text.strong{color:var(--green);}
+.pin-match-msg{font-size:11px;font-weight:600;margin-top:5px;min-height:16px;}
+.pin-match-msg.match{color:var(--green);}
+.pin-match-msg.nomatch{color:var(--red);}
+.reg-nav{display:flex;gap:10px;margin-top:6px;align-items:center;justify-content:space-between;}
+.reg-nav-counter{font-size:11px;color:var(--slate);}
+.btn-reg-back{padding:13px 18px;border:1.5px solid var(--border);border-radius:10px;background:none;cursor:pointer;font-family:'Outfit',sans-serif;font-size:13px;font-weight:600;color:var(--slate);min-height:48px;}
+.btn-reg-next{padding:13px 24px;background:var(--forest);color:white;border:none;border-radius:10px;font-family:'Syne',sans-serif;font-size:14px;font-weight:700;cursor:pointer;min-height:48px;}
+.btn-reg-next:hover{background:var(--green);}
+.btn-reg-next:disabled{opacity:.6;cursor:not-allowed;}
+.reg-confirm-box{background:var(--mist);border:1px solid var(--border);border-radius:12px;padding:16px 18px;margin-bottom:18px;display:grid;gap:10px;}
+.reg-confirm-row{display:flex;justify-content:space-between;align-items:center;}
+.reg-confirm-key{font-size:10px;font-weight:700;color:var(--slate);text-transform:uppercase;letter-spacing:.5px;}
+.reg-confirm-val{font-family:'DM Mono',monospace;font-size:12px;color:var(--ink);}
+.reg-error{background:#fff0f0;border:1px solid #fca5a5;border-radius:8px;padding:10px 13px;font-size:12px;color:var(--red);margin-top:12px;display:none;line-height:1.5;}
+.reg-security-note{background:var(--mint);border:1px solid #c8e6d5;border-radius:8px;padding:10px 13px;font-size:11px;color:var(--forest);margin-top:16px;line-height:1.6;text-align:center;}
+
+/* SUCCESS */
+#regSuccessScreen{display:none;width:100%;max-width:460px;margin:0 auto;animation:fadeUp .4s ease;}
+.success-card{background:var(--white);border-radius:20px;padding:36px 32px;box-shadow:0 4px 24px rgba(0,0,0,.08),0 0 0 1px var(--border);text-align:center;}
+.success-emoji{font-size:52px;display:block;margin-bottom:14px;}
+.success-heading{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:var(--forest);margin-bottom:8px;}
+.success-sub{font-size:13px;color:var(--slate);margin-bottom:24px;line-height:1.65;}
+.pin-reveal{background:var(--mint);border:1px solid #b7d9c3;border-radius:14px;padding:20px 24px;margin-bottom:20px;text-align:left;}
+.pin-reveal-label{font-family:'DM Mono',monospace;font-size:10px;font-weight:500;color:var(--green);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;}
+.pin-reveal-value{font-family:'DM Mono',monospace;font-size:30px;font-weight:500;color:var(--forest);letter-spacing:8px;margin-bottom:8px;word-break:break-all;}
+.pin-reveal-note{font-size:12px;color:var(--slate);line-height:1.6;}
+.pin-save-warning{background:#fff7ed;border:1px solid #fde68a;border-radius:10px;padding:12px 16px;font-size:12px;color:#78350f;margin-bottom:20px;line-height:1.6;text-align:left;}
+.btn-go-login{width:100%;padding:15px;background:var(--forest);color:white;border:none;border-radius:12px;font-family:'Syne',sans-serif;font-size:15px;font-weight:700;cursor:pointer;min-height:52px;}
+.btn-go-login:hover{background:var(--green);}
+.btn-spinner{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.4);border-top-color:white;border-radius:50%;animation:spin-s .7s linear infinite;vertical-align:middle;margin-right:7px;}
+@keyframes spin-s{to{transform:rotate(360deg);}}
+
+/* SESSION WARNING */
+.session-warning{background:#fff7ed;border:1px solid #fde68a;border-radius:10px;padding:10px 14px;font-size:12px;color:#78350f;margin-bottom:14px;display:none;line-height:1.5;}
+.session-warning a{color:#78350f;font-weight:700;}
+
+/* TABS */
+.tab-bar{display:flex;gap:6px;background:var(--white);border:1px solid var(--border);border-radius:12px;padding:5px;margin-bottom:18px;}
+.tab-btn{flex:1;padding:9px 8px;border:none;border-radius:8px;background:none;cursor:pointer;color:var(--slate);font-family:'Outfit',sans-serif;font-size:13px;font-weight:600;transition:all .15s;min-height:44px;}
+.tab-btn.active{background:var(--forest);color:white;}
+.tab-btn .tab-icon{font-size:14px;margin-right:4px;}
+
+/* CARDS */
+.card{background:var(--white);border-radius:16px;padding:26px 24px;box-shadow:0 2px 12px rgba(0,0,0,.05),0 0 0 1px var(--border);margin-bottom:14px;}
+.card-title{font-family:'Syne',sans-serif;font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--slate);margin-bottom:18px;}
+.tab-heading{font-family:'Syne',sans-serif;font-size:21px;font-weight:800;color:var(--forest);margin-bottom:5px;}
+.tab-sub{font-size:13px;color:var(--slate);margin-bottom:18px;line-height:1.6;}
+
+/* NOTICES */
+.notice{border-radius:10px;padding:12px 14px;font-size:12px;line-height:1.6;margin-bottom:14px;border:1px solid var(--border);background:var(--mist);color:var(--slate);}
+.notice.info{background:var(--mint);border-color:#c8e6d5;color:var(--forest);}
+.notice.warn{background:#fff7ed;border-color:#fde68a;color:#78350f;}
+.notice.alert{background:#fff0f0;border-color:#fca5a5;color:var(--red);}
+.consent-row{display:flex;gap:10px;align-items:flex-start;font-size:12px;line-height:1.55;color:var(--ink);cursor:pointer;}
+.consent-row input{margin-top:3px;width:18px;height:18px;flex-shrink:0;}
+
+/* PHASE WIZARD */
+.phase-stepper{display:flex;align-items:center;gap:0;margin-bottom:24px;padding:0 2px;overflow:hidden;}
+.phase-step{display:flex;flex-direction:column;align-items:center;gap:4px;flex:1;position:relative;cursor:default;min-width:0;}
+.phase-step:not(:last-child)::after{content:'';position:absolute;top:13px;left:50%;width:100%;height:2px;background:var(--border);z-index:0;}
+.phase-step.done:not(:last-child)::after{background:var(--green);}
+.step-dot{width:28px;height:28px;border-radius:50%;border:2px solid var(--border);background:var(--white);color:var(--slate);display:flex;align-items:center;justify-content:center;font-family:'DM Mono',monospace;font-size:10px;z-index:1;position:relative;flex-shrink:0;}
+.phase-step.active .step-dot{border-color:var(--green);background:var(--green);color:white;}
+.phase-step.done .step-dot{border-color:var(--green);background:var(--green);color:white;}
+.phase-step.done .step-dot::after{content:'✓';font-size:11px;}
+.phase-step.done .step-dot span{display:none;}
+.step-label{font-size:8px;font-weight:600;letter-spacing:.3px;text-transform:uppercase;color:var(--slate);text-align:center;white-space:nowrap;}
+.phase-step.active .step-label{color:var(--green);}
+.phase-step.done .step-label{color:var(--forest);}
+.phase-panel{display:none;}
+.phase-panel.active{display:block;}
+.phase-heading{font-family:'Syne',sans-serif;font-size:20px;font-weight:800;color:var(--forest);margin-bottom:4px;}
+.phase-sub{font-size:13px;color:var(--slate);margin-bottom:22px;font-weight:400;}
+.field-error{font-size:11px;color:var(--red);margin:-6px 0 12px;display:none;font-weight:600;}
+
+/* FORM */
+.field-label{display:block;font-size:10px;font-weight:700;letter-spacing:.5px;color:var(--slate);margin-bottom:6px;text-transform:uppercase;}
+input[type="text"],input[type="number"],input[type="email"],select,textarea{width:100%;padding:11px 13px;border:1.5px solid var(--border);border-radius:10px;font-family:'Outfit',sans-serif;font-size:16px;color:var(--ink);background:var(--white);transition:border-color .15s;-webkit-appearance:none;min-height:44px;}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--green);}
+input.error,select.error,textarea.error{border-color:var(--red);}
+textarea{resize:vertical;font-size:14px;}
+.field-row{display:grid;gap:12px;margin-bottom:14px;}
+.field-row.two-col{grid-template-columns:1fr 1fr;}
+.field-hint{font-size:11px;color:var(--slate);margin-top:4px;opacity:.8;display:block;}
+
+/* RADIO + TILES */
+.radio-group{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;}
+.radio-opt{flex:1;min-width:calc(33.33% - 8px);padding:12px 8px;border:1.5px solid var(--border);border-radius:10px;cursor:pointer;text-align:center;font-size:13px;color:var(--slate);transition:all .15s;display:flex;flex-direction:column;align-items:center;gap:3px;min-height:64px;justify-content:center;user-select:none;}
+.radio-opt input[type="radio"]{display:none;}
+.radio-opt.selected{border-color:var(--green);background:var(--mint);color:var(--forest);}
+.radio-opt .radio-icon{font-size:16px;}
+.radio-opt .radio-text{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.3px;}
+.signals-label{font-size:10px;font-weight:700;color:var(--slate);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;display:block;}
+.signal-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:12px;}
+.signal-label{display:flex;align-items:center;gap:9px;padding:12px 13px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;color:var(--ink);cursor:pointer;transition:all .15s;background:var(--white);min-height:48px;user-select:none;}
+.signal-label input[type="checkbox"]{display:none;}
+.signal-label .dot{width:18px;height:18px;border:2px solid var(--border);border-radius:4px;flex-shrink:0;transition:all .15s;position:relative;}
+.signal-label.selected .dot{background:var(--green);border-color:var(--green);}
+.signal-label.selected .dot::after{content:'';position:absolute;left:4px;top:1px;width:6px;height:9px;border:2px solid white;border-top:none;border-left:none;transform:rotate(45deg);}
+.signal-label.selected{border-color:var(--green);background:var(--mint);}
+.signal-label .sig-icon{font-size:14px;flex-shrink:0;}
+.conditional-field{display:none;}
+.tile-select{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:14px;}
+.tile-select.two-col{grid-template-columns:1fr 1fr;}
+.tile-select.three-col{grid-template-columns:1fr 1fr 1fr;}
+.tile-opt{padding:12px 8px;border:1.5px solid var(--border);border-radius:10px;cursor:pointer;text-align:center;transition:all .15s;background:var(--white);min-height:64px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;user-select:none;}
+.tile-opt input[type="radio"]{display:none;}
+.tile-opt.selected{border-color:var(--green);background:var(--mint);}
+.tile-opt .tile-icon{font-size:18px;display:block;}
+.tile-opt .tile-text{font-size:10px;font-weight:600;color:var(--slate);text-transform:uppercase;letter-spacing:.3px;}
+.tile-opt.selected .tile-text{color:var(--forest);}
+
+/* SLIDERS */
+.subjective-slider{margin-bottom:20px;}
+.slider-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
+.slider-label{font-size:12px;font-weight:600;color:var(--ink);text-transform:uppercase;letter-spacing:.4px;}
+.slider-value{font-family:'DM Mono',monospace;font-size:15px;font-weight:500;color:var(--green);}
+input[type="range"]{width:100%;height:6px;-webkit-appearance:none;appearance:none;background:var(--border);border-radius:3px;outline:none;}
+input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:26px;height:26px;border-radius:50%;background:var(--forest);cursor:pointer;border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,.25);}
+input[type="range"]::-moz-range-thumb{width:26px;height:26px;border-radius:50%;background:var(--forest);cursor:pointer;border:3px solid white;}
+.slider-ticks{display:flex;justify-content:space-between;font-size:10px;color:var(--slate);margin-top:4px;}
+.slider-group{margin-bottom:20px;}
+
+/* NAV */
+.phase-nav{display:flex;gap:10px;margin-top:6px;justify-content:space-between;align-items:center;}
+.btn-back{padding:13px 20px;border:1.5px solid var(--border);border-radius:10px;background:none;cursor:pointer;font-family:'Outfit',sans-serif;font-size:13px;font-weight:600;color:var(--slate);transition:all .15s;min-height:48px;}
+.btn-back:hover{background:var(--mist);border-color:var(--slate);}
+.btn-next{flex:1;padding:14px 20px;background:var(--forest);color:white;border:none;border-radius:10px;font-family:'Syne',sans-serif;font-size:14px;font-weight:700;cursor:pointer;transition:all .2s;min-height:48px;}
+.btn-next:hover{background:var(--green);transform:translateY(-1px);}
+.btn-next:active{transform:none;}
+.phase-counter{font-size:11px;color:var(--slate);white-space:nowrap;}
+.cta-btn{width:100%;padding:16px;background:var(--forest);color:white;border:none;border-radius:12px;font-family:'Syne',sans-serif;font-size:15px;font-weight:700;cursor:pointer;transition:all .2s;min-height:52px;}
+.cta-btn:hover{background:var(--green);}
+.cta-btn:disabled{opacity:.6;cursor:not-allowed;}
+.cta-btn.secondary{background:none;color:var(--forest);border:1.5px solid var(--forest);}
+
+/* LOADING */
+#loadingOverlay{display:none;text-align:center;padding:40px 0;}
+.spinner-dna{font-size:48px;animation:spin-dna 2s ease-in-out infinite;display:inline-block;margin-bottom:16px;}
+@keyframes spin-dna{0%,100%{transform:scale(1);}50%{transform:scale(1.2) rotate(10deg);}}
+.loading-stage{font-family:'DM Mono',monospace;font-size:12px;color:var(--green);letter-spacing:.5px;min-height:20px;}
+.loading-bar-wrap{width:200px;height:3px;background:var(--border);border-radius:2px;margin:14px auto 0;}
+.loading-bar{height:100%;background:var(--green);border-radius:2px;width:0;transition:width .7s ease;}
+.loading-sub{font-size:12px;color:var(--slate);margin-top:8px;}
+
+/* DASHBOARD */
+#dashboard{display:none;animation:fadeUp .5s ease;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);}}
+.coach-bar{background:linear-gradient(135deg,var(--forest) 0%,#1f4d36 100%);color:white;padding:18px 20px;border-radius:14px;margin-bottom:14px;display:flex;gap:14px;align-items:flex-start;}
+.coach-icon{font-size:20px;flex-shrink:0;margin-top:1px;}
+.coach-text{font-size:13px;line-height:1.7;color:rgba(255,255,255,.9);}
+.pae-urgent{background:#fff0f0;border:2px solid var(--red);border-radius:14px;padding:24px 20px;margin-bottom:14px;}
+.pae-urgent-icon{font-size:36px;display:block;margin-bottom:12px;}
+.pae-urgent-title{font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:var(--red);margin-bottom:8px;}
+.pae-urgent-msg{font-size:14px;color:var(--ink);line-height:1.7;}
+.pae-hold{background:#fff7ed;border:2px solid var(--amber);border-radius:14px;padding:24px 20px;margin-bottom:14px;}
+.pae-hold-title{font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:var(--amber);margin-bottom:8px;}
+.pae-hold-msg{font-size:13px;color:var(--ink);line-height:1.7;}
+.pae-ref{font-family:'DM Mono',monospace;font-size:11px;color:var(--slate);margin-top:10px;word-break:break-all;}
+.pbu-card{background:var(--bioOs);border-radius:14px;padding:18px 20px;margin-bottom:12px;position:relative;overflow:hidden;}
+.pbu-title{font-family:'Syne',sans-serif;font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,.6);margin-bottom:10px;}
+.pbu-narrative{font-size:13px;line-height:1.75;color:rgba(255,255,255,.92);}
+.pbu-confidence{display:inline-flex;align-items:center;gap:6px;margin-top:12px;font-family:'DM Mono',monospace;font-size:10px;color:rgba(255,255,255,.6);}
+.pbu-confidence-bar{width:80px;height:3px;background:rgba(255,255,255,.2);border-radius:2px;overflow:hidden;}
+.pbu-confidence-fill{height:100%;background:#4caf71;border-radius:2px;}
+.tcm-card{background:var(--goldBg);border:1.5px solid #e8c840;border-radius:14px;padding:16px 18px;margin-bottom:12px;}
+.tcm-title{font-family:'Syne',sans-serif;font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--gold);margin-bottom:8px;}
+.tcm-pattern-label{font-family:'Syne',sans-serif;font-size:16px;font-weight:800;color:#78350f;margin-bottom:6px;}
+.tcm-narrative{font-size:12px;color:#92400e;line-height:1.65;}
+.tcm-climate-note{font-size:11px;color:#a05020;margin-top:8px;font-style:italic;}
+.badge-lifecycle-row{display:flex;gap:7px;align-items:center;flex-wrap:wrap;margin-bottom:14px;}
+.evo-badge{display:inline-flex;align-items:center;gap:5px;padding:5px 11px;border-radius:20px;font-size:10px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;}
+.evo-badge.baseline{background:#f3f4f6;color:var(--baseline);border:1px solid #d1d5db;}
+.evo-badge.improving{background:#dcfce7;color:var(--improving);border:1px solid #bbf7d0;}
+.evo-badge.stable{background:#dbeafe;color:var(--stable);border:1px solid #bfdbfe;}
+.evo-badge.declining{background:#fee2e2;color:var(--declining);border:1px solid #fecaca;}
+.evo-badge.urgent{background:#fee2e2;color:var(--red);border:1px solid #fecaca;}
+.lifecycle-pill{display:inline-flex;align-items:center;gap:5px;padding:5px 11px;border-radius:20px;background:#f0fdf4;color:var(--forest);border:1px solid #bbf7d0;font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;}
+.lifecycle-pill.recovery{background:#fee2e2;color:var(--declining);border-color:#fecaca;}
+.lifecycle-pill.recalib{background:#fff7ed;color:var(--amber);border-color:#fed7aa;}
+.resp-badge{display:inline-flex;align-items:center;gap:5px;padding:5px 11px;border-radius:20px;border:1px solid;font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;}
+.resp-badge.accelerating{background:#dcfce7;color:var(--green);border-color:#bbf7d0;}
+.resp-badge.neutral{background:#e0f2fe;color:#0369a1;border-color:#bae6fd;}
+.resp-badge.slowed{background:#fff7ed;color:var(--amber);border-color:#fed7aa;}
+.resp-badge.stagnating{background:#fee2e2;color:var(--red);border-color:#fecaca;}
+.stats-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:12px;}
+.stat-tile{background:var(--white);border:1px solid var(--border);border-radius:14px;padding:16px 12px;text-align:center;position:relative;overflow:hidden;}
+.stat-tile::after{content:'';position:absolute;bottom:0;left:0;right:0;height:3px;background:var(--green);}
+.stat-tile.declining::after{background:var(--red);}
+.stat-tile.improving::after{background:var(--leaf);}
+.stat-tile.stable::after{background:var(--blue);}
+.stat-label{font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--slate);font-weight:700;margin-bottom:7px;}
+.stat-value{font-family:'Syne',sans-serif;font-size:26px;font-weight:800;color:var(--forest);line-height:1;}
+.stat-sub{font-size:10px;color:var(--slate);margin-top:5px;}
+.meta-row{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px;}
+.meta-tile{background:var(--mint);border:1px solid #c8e6d5;border-radius:11px;padding:10px;text-align:center;}
+.meta-label{font-size:8px;letter-spacing:1px;text-transform:uppercase;color:var(--green);font-weight:700;margin-bottom:4px;}
+.meta-value{font-family:'DM Mono',monospace;font-size:14px;font-weight:500;color:var(--forest);}
+
+/* GAP CARD */
+.gap-card{background:#fffbf0;border:1.5px solid #f5d87a;border-radius:14px;margin-bottom:12px;overflow:hidden;}
+.gap-card-header{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;background:#fffbf0;border-bottom:1px solid transparent;cursor:pointer;min-height:52px;}
+.gap-card-header.has-body{border-bottom-color:#f5d87a;}
+.gap-card-title{display:flex;align-items:center;gap:8px;font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:#92400e;}
+.gap-count-badge{background:#f59e0b;color:white;border-radius:100px;padding:2px 9px;font-family:'DM Mono',monospace;font-size:10px;}
+.gap-toggle{font-size:10px;color:#a06000;opacity:.7;white-space:nowrap;}
+.gap-card-body{display:none;}
+.gap-card-body.open{display:block;}
+.depth-banner{display:flex;align-items:flex-start;gap:10px;background:#fffbf0;border-bottom:1px solid #fde68a;padding:12px 18px;font-size:12px;color:#78350f;line-height:1.6;}
+.test-rec-card{border-top:1px solid #fde68a;padding:16px 18px;background:#fffbf0;}
+.test-rec-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:6px;}
+.test-rec-name{font-family:'Syne',sans-serif;font-size:14px;font-weight:700;color:var(--ink);}
+.priority-pill{font-family:'DM Mono',monospace;font-size:10px;font-weight:600;padding:3px 9px;border-radius:100px;flex-shrink:0;white-space:nowrap;}
+.priority-pill.p1{background:#fee2e2;color:#991b1b;}
+.priority-pill.p2{background:#fff7ed;color:#92400e;}
+.priority-pill.p3{background:#f0fdf4;color:#166534;}
+.test-rec-biomarkers{font-size:11px;color:var(--slate);font-style:italic;margin-bottom:7px;}
+.test-rec-reason{font-size:12px;color:var(--slate);line-height:1.65;margin-bottom:10px;}
+.test-rec-meta{display:flex;gap:7px;flex-wrap:wrap;align-items:center;}
+.test-meta-tag{background:white;border:1px solid #fde68a;border-radius:6px;padding:4px 10px;font-size:11px;color:#78350f;font-family:'DM Mono',monospace;}
+.test-rec-how{font-size:11px;color:var(--forest);background:white;border:1px solid #fde68a;border-radius:8px;padding:10px 12px;margin-top:10px;line-height:1.55;}
+
+/* NARRATIVE / CHART */
+.narrative-card{background:#f8fffe;border:1px solid #c8e6d5;border-radius:14px;padding:18px 20px;margin-bottom:12px;}
+.narrative-title{font-family:'Syne',sans-serif;font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--green);margin-bottom:12px;}
+.narrative-main{font-size:13px;line-height:1.75;color:var(--ink);margin-bottom:10px;}
+.narrative-sub{font-size:12px;color:var(--slate);line-height:1.65;border-top:1px solid var(--border);padding-top:10px;display:flex;flex-direction:column;gap:5px;}
+.narrative-sub span{display:block;}
+.chart-wrap{background:var(--white);border:1px solid var(--border);border-radius:16px;padding:20px;margin-bottom:12px;}
+.chart-wrap canvas{max-height:260px;}
+
+/* SUPPLEMENTS */
+.stack-header{font-family:'Syne',sans-serif;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--forest);padding:10px 0;border-bottom:1px solid var(--border);margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+.supp-card{border:1px solid var(--border);border-radius:12px;padding:15px;margin-bottom:9px;position:relative;overflow:hidden;transition:box-shadow .15s;}
+.supp-card:hover{box-shadow:0 4px 16px rgba(0,0,0,.07);}
+.supp-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--green);}
+.supp-card.caution::before{background:var(--amber);}
+.supp-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:6px;}
+.supp-name{font-family:'Syne',sans-serif;font-size:14px;font-weight:700;color:var(--ink);}
+.supp-dose-tag{background:var(--mint);color:var(--forest);padding:3px 8px;border-radius:6px;font-family:'DM Mono',monospace;font-size:10px;white-space:nowrap;flex-shrink:0;}
+.supp-caution-tag{display:inline-block;background:#fff7ed;color:#92400e;border:1px solid #fde68a;border-radius:6px;padding:2px 8px;font-size:10px;font-weight:700;margin-bottom:7px;}
+.supp-hero{font-size:12px;color:var(--green);font-style:italic;margin-bottom:7px;display:block;line-height:1.45;}
+.supp-ing{font-size:11px;color:var(--slate);margin-bottom:9px;display:block;}
+details.clinical-details{background:var(--mist);border:1px solid var(--border);border-radius:8px;overflow:hidden;}
+details.clinical-details summary{cursor:pointer;padding:10px 12px;font-size:11px;font-weight:600;color:var(--green);list-style:none;display:flex;align-items:center;gap:6px;min-height:44px;}
+details.clinical-details summary::-webkit-details-marker{display:none;}
+details.clinical-details summary::before{content:'▶';font-size:8px;transition:transform .15s;}
+details[open].clinical-details summary::before{transform:rotate(90deg);}
+.clinical-body{padding:12px;display:grid;gap:6px;}
+.clinical-row{font-size:11px;color:var(--ink);line-height:1.5;}
+.clinical-row strong{color:var(--slate);}
+.clinical-row.warn{color:var(--red);}
+.empty-stack{padding:14px;text-align:center;font-size:13px;color:var(--slate);font-style:italic;}
+.life-card{background:#fffbf0;border:1px solid #f3e0a8;border-radius:12px;padding:14px 16px;margin-bottom:9px;}
+.life-cat{font-family:'DM Mono',monospace;font-size:9px;font-weight:500;color:var(--amber);text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:5px;}
+.life-title{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--ink);margin-bottom:5px;}
+.life-text{font-size:12px;color:var(--slate);line-height:1.65;}
+.reset-btn{width:100%;padding:14px;background:none;border:1px solid var(--border);border-radius:10px;color:var(--slate);font-size:13px;cursor:pointer;margin-top:6px;transition:all .15s;min-height:48px;}
+.reset-btn:hover{background:var(--mist);border-color:var(--slate);}
+
+/* CHECK-IN */
+.preview-card{background:linear-gradient(135deg,var(--forest) 0%,#1f4d36 100%);border-radius:14px;padding:18px 20px;margin-bottom:22px;}
+.preview-title{font-family:'Syne',sans-serif;font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,.6);margin-bottom:14px;}
+.preview-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px;}
+.preview-tile{text-align:center;}
+.preview-tile-label{font-size:9px;letter-spacing:.8px;text-transform:uppercase;color:rgba(255,255,255,.5);margin-bottom:5px;}
+.preview-tile-val{font-family:'DM Mono',monospace;font-size:18px;font-weight:500;color:white;}
+.preview-tile-sub{font-size:9px;color:rgba(255,255,255,.55);margin-top:3px;}
+.preview-stmt{font-size:12px;color:rgba(255,255,255,.75);line-height:1.65;border-top:1px solid rgba(255,255,255,.12);padding-top:12px;}
+.ci-user-note{background:var(--mint);border:1px solid #c8e6d5;border-radius:10px;padding:11px 14px;font-size:12px;color:var(--forest);margin-bottom:16px;line-height:1.5;}
+
+/* LABS + WEARABLES */
+.dropzone{border:2px dashed var(--border);border-radius:12px;padding:26px 20px;text-align:center;margin-bottom:16px;background:var(--mist);}
+.file-result{border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:12px;background:var(--white);}
+.file-result.failed{border-color:#fca5a5;background:#fff8f8;}
+.file-result-name{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--ink);margin-bottom:8px;word-break:break-all;}
+table.data-table{width:100%;border-collapse:collapse;font-size:12px;}
+table.data-table th{text-align:left;padding:6px 8px;color:var(--slate);font-size:10px;text-transform:uppercase;letter-spacing:.4px;border-bottom:1px solid var(--border);}
+table.data-table td{padding:6px 8px;border-top:1px solid var(--border);font-family:'DM Mono',monospace;}
+.table-scroll{overflow-x:auto;}
+.debug-bar{background:#fffbeb;border:1px dashed var(--gold);border-radius:10px;padding:10px 14px;font-size:12px;margin-top:14px;}
+
+@media(max-width:640px){
+  .meta-row{grid-template-columns:1fr 1fr;}
+  .preview-grid{grid-template-columns:1fr;gap:6px;}
+  .preview-tile{display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.08);}
+  .preview-tile:last-child{border-bottom:none;}
+  .preview-tile-label,.preview-tile-sub{margin:0;}
+}
+@media(max-width:520px){
+  body{padding:14px 12px 40px;}
+  .card{padding:20px 16px;}
+  .login-card{padding:28px 20px;}
+  .stats-row{grid-template-columns:1fr 1fr;}
+  .stats-row .stat-tile:last-child{grid-column:span 2;}
+  .signal-grid{grid-template-columns:1fr;}
+  .field-row.two-col{grid-template-columns:1fr;}
+  .radio-group{flex-direction:column;}
+  .radio-opt{min-width:100%;flex-direction:row;justify-content:flex-start;gap:12px;min-height:48px;}
+  .tile-select{grid-template-columns:1fr 1fr;}
+  .tile-select.three-col{grid-template-columns:1fr 1fr;}
+  .phase-step .step-label{display:none;}
+  .phase-heading{font-size:18px;}
+  .btn-back{padding:13px 14px;font-size:12px;}
+  .btn-next{font-size:13px;}
+  .tab-btn{font-size:12px;padding:9px 4px;}
+  .tab-btn .tab-icon{margin-right:2px;}
+}
+</style>
+</head>
+<body>
+<noscript>This application needs JavaScript.</noscript>
+
+<header class="site-header">
+  <div>
+    <div class="logo-text">PHYTOMEDIX</div>
+    <span class="logo-sub">BIOLOGICAL OPERATING SYSTEM</span>
+  </div>
+  <div class="header-right">
+    <span class="session-indicator" id="sessionIndicator">Session Active</span>
+    <span class="engine-badge">BIO-OS v32.1</span>
+    <button class="logout-btn" id="logoutBtn" onclick="handleLogout()">Sign Out</button>
+  </div>
+</header>
+
+<!-- LOGIN -->
+<div id="loginScreen">
+  <div class="login-card">
+    <div class="login-heading">Sign In</div>
+    <p class="login-sub">Enter your member email and PIN to access your Biological Operating System.</p>
+    <div class="login-field">
+      <label for="login_email">Email Address</label>
+      <input type="email" id="login_email" placeholder="your@email.com" autocomplete="email" autocapitalize="none" spellcheck="false">
+    </div>
+    <div class="login-field">
+      <label for="login_pin">PIN</label>
+      <input type="password" id="login_pin" placeholder="Your PIN" inputmode="numeric" maxlength="20" autocomplete="current-password">
+      <span class="pin-hint">Your PIN was set when your account was created.</span>
+    </div>
+    <button class="login-btn" id="loginBtn" onclick="handleLogin()">Sign In →</button>
+    <div class="login-error" id="loginError" role="alert"></div>
+    <div class="login-note">🔒 Your session ends after 30 minutes. Nothing is stored in this browser after you close the tab.</div>
+    <div class="auth-switch-link" style="margin-top:14px;">New member? <a onclick="showRegisterScreen()">Create account →</a></div>
+  </div>
+</div>
+
+<!-- REGISTER -->
+<div id="registerScreen">
+  <div class="reg-card">
+    <div class="login-heading" style="margin-bottom:6px;">Create Account</div>
+    <p class="login-sub">Set up your Phytomedix Bio-OS account in 3 steps.</p>
+    <div class="reg-steps">
+      <div class="reg-step active" id="rstep_1"><div class="step-dot"><span>1</span></div><div class="reg-step-label">Identity</div></div>
+      <div class="reg-step" id="rstep_2"><div class="step-dot"><span>2</span></div><div class="reg-step-label">Security</div></div>
+      <div class="reg-step" id="rstep_3"><div class="step-dot"><span>3</span></div><div class="reg-step-label">Confirm</div></div>
+    </div>
+    <div class="reg-panel active" id="rpanel_1">
+      <h3 class="reg-panel-heading">Your Identity</h3>
+      <p class="reg-panel-sub">Your email becomes your login ID and links to your Twin State.</p>
+      <div class="reg-field"><label for="r_email">Email Address</label><input type="email" id="r_email" placeholder="your@email.com" autocomplete="email" autocapitalize="none" spellcheck="false"></div>
+      <div class="reg-field"><label for="r_name">Full Name <span style="font-weight:400;text-transform:none;">(optional)</span></label><input type="text" id="r_name" placeholder="Your name" autocomplete="name"></div>
+      <div class="reg-nav"><span class="reg-nav-counter">Step 1 of 3</span><button class="btn-reg-next" onclick="goRegStep(2)">Continue →</button></div>
+    </div>
+    <div class="reg-panel" id="rpanel_2">
+      <h3 class="reg-panel-heading">Set Your PIN</h3>
+      <p class="reg-panel-sub">6 to 20 characters. Used every time you sign in. Avoid easy PINs such as 123456.</p>
+      <div class="reg-field"><label for="r_pin">Your PIN</label><input type="password" id="r_pin" placeholder="At least 6 characters" inputmode="numeric" maxlength="20" autocomplete="new-password" oninput="checkPinStrength()"><div class="pin-strength-bar"><div class="pin-strength-fill" id="pinStrengthFill"></div></div><span class="pin-strength-text" id="pinStrengthText"></span></div>
+      <div class="reg-field"><label for="r_pin_confirm">Confirm PIN</label><input type="password" id="r_pin_confirm" placeholder="Re-enter your PIN" inputmode="numeric" maxlength="20" autocomplete="new-password" oninput="checkPinMatch()"><div class="pin-match-msg" id="pinMatchMsg"></div></div>
+      <div class="reg-nav"><button class="btn-reg-back" onclick="goRegStep(1)">← Back</button><span class="reg-nav-counter">Step 2 of 3</span><button class="btn-reg-next" onclick="goRegStep(3)">Continue →</button></div>
+    </div>
+    <div class="reg-panel" id="rpanel_3">
+      <h3 class="reg-panel-heading">Confirm &amp; Create</h3>
+      <p class="reg-panel-sub">Review your details before creating your account.</p>
+      <div class="reg-confirm-box">
+        <div class="reg-confirm-row"><span class="reg-confirm-key">Email</span><span class="reg-confirm-val" id="confirm_email">—</span></div>
+        <div class="reg-confirm-row"><span class="reg-confirm-key">Name</span><span class="reg-confirm-val" id="confirm_name" style="font-family:'Outfit',sans-serif;font-size:13px;">—</span></div>
+        <div class="reg-confirm-row"><span class="reg-confirm-key">PIN</span><span class="reg-confirm-val">●●●●●●</span></div>
+      </div>
+      <div class="reg-error" id="regError" role="alert"></div>
+      <div class="reg-nav"><button class="btn-reg-back" onclick="goRegStep(2)">← Back</button><span class="reg-nav-counter">Step 3 of 3</span><button class="btn-reg-next" id="createBtn" onclick="submitRegistration()">Create Account</button></div>
+    </div>
+  </div>
+  <div class="auth-switch-link">Already have an account? <a onclick="showLoginScreen()">Sign in →</a></div>
+</div>
+
+<!-- REGISTER SUCCESS -->
+<div id="regSuccessScreen">
+  <div class="success-card">
+    <span class="success-emoji">🌿</span>
+    <div class="success-heading">Account Created</div>
+    <p class="success-sub">Your Phytomedix Bio-OS account is ready. Sign in to begin your first assessment.</p>
+    <div class="pin-reveal"><div class="pin-reveal-label">The PIN you chose</div><div class="pin-reveal-value" id="success_pin_display">——————</div><div class="pin-reveal-note">We cannot show it again. Save it in a password manager.</div></div>
+    <button class="btn-go-login" onclick="afterRegSuccess()">Sign In to Your Bio-OS →</button>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div class="container" id="mainApp" style="display:none;">
+  <div class="session-warning" id="sessionWarning">⏱ Your session ends in under 5 minutes. <a href="#" onclick="handleLogout();return false;">Sign out now</a>.</div>
+  <div class="tab-bar" id="tabBar">
+    <button class="tab-btn active" id="tab_assess" onclick="switchTab('assess')"><span class="tab-icon">🧬</span>Assessment</button>
+    <button class="tab-btn" id="tab_checkin" onclick="switchTab('checkin')"><span class="tab-icon">🔄</span>Check-in</button>
+    <button class="tab-btn" id="tab_labs" onclick="switchTab('labs')"><span class="tab-icon">🧪</span>Labs</button>
+    <button class="tab-btn" id="tab_wearables" onclick="switchTab('wearables')"><span class="tab-icon">⌚</span>Wearables</button>
+  </div>
+
+  <!-- ASSESSMENT -->
+  <div id="assessTab">
+    <div id="assessError"></div>
+    <div class="card" id="formCard">
+      <div class="phase-stepper" id="phaseStepper">
+        <div class="phase-step active" id="pstep_1"><div class="step-dot"><span>1</span></div><div class="step-label">Biometrics</div></div>
+        <div class="phase-step" id="pstep_2"><div class="step-dot"><span>2</span></div><div class="step-label">Conditions</div></div>
+        <div class="phase-step" id="pstep_3"><div class="step-dot"><span>3</span></div><div class="step-label">Lifestyle</div></div>
+        <div class="phase-step" id="pstep_4"><div class="step-dot"><span>4</span></div><div class="step-label">Environment</div></div>
+        <div class="phase-step" id="pstep_5"><div class="step-dot"><span>5</span></div><div class="step-label">Medications</div></div>
+        <div class="phase-step" id="pstep_6"><div class="step-dot"><span>6</span></div><div class="step-label">Signals</div></div>
+      </div>
+
+      <!-- PHASE 1 -->
+      <div class="phase-panel active" id="phase1">
+        <h2 class="phase-heading">Identity &amp; Biometrics</h2>
+        <p class="phase-sub">Core parameters for Bio-OS initialisation and dose tiering.</p>
+        <div class="field-row two-col">
+          <div><label class="field-label" for="a_age">Age</label><input type="number" id="a_age" placeholder="35" value="35" min="18" max="100" inputmode="numeric"></div>
+          <div><label class="field-label">Biological sex</label>
+            <div class="radio-group" id="sex_group" style="margin-bottom:0;">
+              <label class="radio-opt" onclick="markSelected(this,'sex_group')"><input type="radio" name="sex" value="Female"><span class="radio-icon">♀</span><span class="radio-text">Female</span></label>
+              <label class="radio-opt" onclick="markSelected(this,'sex_group')"><input type="radio" name="sex" value="Male"><span class="radio-icon">♂</span><span class="radio-text">Male</span></label>
+            </div>
+          </div>
+        </div>
+        <div class="field-error" id="err_sex">Please choose your biological sex.</div>
+        <div class="field-row two-col">
+          <div><label class="field-label" for="a_weight">Weight (kg)</label><input type="number" id="a_weight" placeholder="75" min="30" max="250" inputmode="decimal"><span class="field-hint">Dose tier calculation</span></div>
+          <div><label class="field-label" for="a_height">Height (cm)</label><input type="number" id="a_height" placeholder="170" min="100" max="250" inputmode="decimal"><span class="field-hint">BMI calculation</span></div>
+        </div>
+        <div class="field-row" style="margin-bottom:22px;">
+          <label class="field-label">Smoking status</label>
+          <div class="radio-group" id="smoking_group">
+            <label class="radio-opt selected" onclick="markSelected(this,'smoking_group')"><input type="radio" name="smoking" value="Never" checked><span class="radio-icon">🚭</span><span class="radio-text">Never</span></label>
+            <label class="radio-opt" onclick="markSelected(this,'smoking_group')"><input type="radio" name="smoking" value="Former"><span class="radio-icon">🕐</span><span class="radio-text">Former</span></label>
+            <label class="radio-opt" onclick="markSelected(this,'smoking_group')"><input type="radio" name="smoking" value="Current"><span class="radio-icon">⚠️</span><span class="radio-text">Current</span></label>
+          </div>
+        </div>
+        <div class="phase-nav"><span class="phase-counter">Step 1 of 6</span><button class="btn-next" onclick="goPhase(2)">Continue → Conditions</button></div>
+      </div>
+
+      <!-- PHASE 2 -->
+      <div class="phase-panel" id="phase2">
+        <h2 class="phase-heading">Clinical Signals</h2>
+        <p class="phase-sub">Select all that apply. Each activates a specific domain scoring pathway.</p>
+        <span class="signals-label">Metabolic &amp; Cardiovascular</span>
+        <div class="signal-grid">
+          <label class="signal-label" onclick="toggleSignal(this)"><input type="checkbox" id="sym_diabetes" value="Diabetes Type 2"><span class="dot"></span><span class="sig-icon">🩸</span><span>High Blood Sugar / T2D</span></label>
+          <label class="signal-label" onclick="toggleSignal(this)"><input type="checkbox" id="sym_bp" value="Hypertension"><span class="dot"></span><span class="sig-icon">❤️</span><span>High Blood Pressure</span></label>
+          <label class="signal-label" onclick="toggleSignal(this)"><input type="checkbox" id="sym_chol" value="High Cholesterol"><span class="dot"></span><span class="sig-icon">🧪</span><span>High Cholesterol</span></label>
+          <label class="signal-label" onclick="toggleSignal(this)"><input type="checkbox" id="sym_obesity" value="Obesity / Weight Management"><span class="dot"></span><span class="sig-icon">⚖️</span><span>Obesity / Weight</span></label>
+        </div>
+        <span class="signals-label">Neurological &amp; Cognitive</span>
+        <div class="signal-grid">
+          <label class="signal-label" onclick="toggleSignal(this)"><input type="checkbox" id="sym_brain" value="Brain Fog"><span class="dot"></span><span class="sig-icon">🧠</span><span>Brain Fog / Focus</span></label>
+          <label class="signal-label" onclick="toggleSignal(this)"><input type="checkbox" id="sym_anxiety" value="Anxiety / Chronic Stress"><span class="dot"></span><span class="sig-icon">😟</span><span>Anxiety / Stress</span></label>
+        </div>
+        <span class="signals-label">Musculoskeletal &amp; Digestive</span>
+        <div class="signal-grid">
+          <label class="signal-label" onclick="toggleSignal(this)"><input type="checkbox" id="sym_joints" value="Joint Pain / Arthritis"><span class="dot"></span><span class="sig-icon">🦴</span><span>Joint Pain / Arthritis</span></label>
+          <label class="signal-label" onclick="toggleSignal(this)"><input type="checkbox" id="sym_gut" value="IBS / Digestive Issues"><span class="dot"></span><span class="sig-icon">🌿</span><span>IBS / Digestive</span></label>
+        </div>
+        <span class="signals-label">Hormonal &amp; Other</span>
+        <div class="signal-grid">
+          <label class="signal-label" onclick="toggleSignal(this)"><input type="checkbox" id="sym_hormone" value="Hormonal Imbalance / Low Libido"><span class="dot"></span><span class="sig-icon">⚡</span><span>Hormonal / Low Libido</span></label>
+          <label class="signal-label conditional-field" id="field_menopause" onclick="toggleSignal(this)"><input type="checkbox" id="sym_menopause" value="Menopause"><span class="dot"></span><span class="sig-icon">🌸</span><span>Menopause / Peri</span></label>
+          <label class="signal-label" onclick="toggleSignal(this)"><input type="checkbox" id="sym_thyroid" value="Thyroid / Hypothyroid"><span class="dot"></span><span class="sig-icon">🦋</span><span>Thyroid</span></label>
+          <label class="signal-label" onclick="toggleSignal(this)"><input type="checkbox" id="sym_copd" value="COPD / Asthma"><span class="dot"></span><span class="sig-icon">🫁</span><span>COPD / Asthma</span></label>
+        </div>
+
+        <div id="pregnancy_block" style="display:none;margin-bottom:18px;">
+          <label class="field-label" style="margin-bottom:10px;">Are you pregnant or could you be pregnant?</label>
+          <div class="radio-group" id="preg_group" style="margin-bottom:6px;">
+            <label class="radio-opt" onclick="markSelected(this,'preg_group')"><input type="radio" name="pregnant" value="Yes"><span class="radio-text">Yes</span></label>
+            <label class="radio-opt" onclick="markSelected(this,'preg_group')"><input type="radio" name="pregnant" value="No"><span class="radio-text">No</span></label>
+            <label class="radio-opt" onclick="markSelected(this,'preg_group')"><input type="radio" name="pregnant" value="Prefer not to say"><span class="radio-text">Prefer not to say</span></label>
+          </div>
+          <span class="field-hint">Some ingredients are not suitable in pregnancy. 'Prefer not to say' is treated as possibly pregnant.</span>
+          <div class="field-error" id="err_preg" style="margin-top:8px;">Please answer this question.</div>
+        </div>
+
+        <div class="notice">💡 <strong>Medication check:</strong> if you take prescription medication, a clinical reviewer checks your profile before any protocol is released. You will enter medications in Step 5.</div>
+        <div class="phase-nav"><button class="btn-back" onclick="goPhase(1)">← Back</button><span class="phase-counter">Step 2 of 6</span><button class="btn-next" onclick="goPhase(3)">Continue → Lifestyle</button></div>
+      </div>
+
+      <!-- PHASE 3 -->
+      <div class="phase-panel" id="phase3">
+        <h2 class="phase-heading">Lifestyle Context</h2>
+        <p class="phase-sub">Environmental inputs that modulate your domain load calculations.</p>
+        <label class="field-label" style="margin-bottom:10px;">Diet pattern</label>
+        <div class="tile-select" id="diet_group" style="margin-bottom:20px;">
+          <label class="tile-opt selected" onclick="markSelected(this,'diet_group')"><input type="radio" name="diet" value="Balanced" checked><span class="tile-icon">🥗</span><span class="tile-text">Balanced</span></label>
+          <label class="tile-opt" onclick="markSelected(this,'diet_group')"><input type="radio" name="diet" value="High carb"><span class="tile-icon">🍞</span><span class="tile-text">High Carb</span></label>
+          <label class="tile-opt" onclick="markSelected(this,'diet_group')"><input type="radio" name="diet" value="High fat / Keto"><span class="tile-icon">🥑</span><span class="tile-text">High Fat</span></label>
+          <label class="tile-opt" onclick="markSelected(this,'diet_group')"><input type="radio" name="diet" value="Low calorie / Restricted"><span class="tile-icon">📉</span><span class="tile-text">Low Cal</span></label>
+        </div>
+        <label class="field-label" style="margin-bottom:10px;">Exercise frequency</label>
+        <div class="tile-select" id="exercise_group" style="margin-bottom:20px;">
+          <label class="tile-opt" onclick="markSelected(this,'exercise_group')"><input type="radio" name="exercise" value="None"><span class="tile-icon">🛋️</span><span class="tile-text">None</span></label>
+          <label class="tile-opt selected" onclick="markSelected(this,'exercise_group')"><input type="radio" name="exercise" value="1–2x / week" checked><span class="tile-icon">🚶</span><span class="tile-text">1–2x / wk</span></label>
+          <label class="tile-opt" onclick="markSelected(this,'exercise_group')"><input type="radio" name="exercise" value="3–5x / week"><span class="tile-icon">🏃</span><span class="tile-text">3–5x / wk</span></label>
+          <label class="tile-opt" onclick="markSelected(this,'exercise_group')"><input type="radio" name="exercise" value="Daily / Athletic"><span class="tile-icon">🏋️</span><span class="tile-text">Daily</span></label>
+        </div>
+        <div class="field-row two-col">
+          <div><label class="field-label" style="margin-bottom:10px;">Avg. nightly sleep</label>
+            <div class="tile-select two-col" id="sleep_group" style="margin-bottom:0;">
+              <label class="tile-opt" onclick="markSelected(this,'sleep_group')"><input type="radio" name="sleep_hrs" value="Under 5h"><span class="tile-icon">😴</span><span class="tile-text">&lt;5h</span></label>
+              <label class="tile-opt" onclick="markSelected(this,'sleep_group')"><input type="radio" name="sleep_hrs" value="5–6h"><span class="tile-icon">😑</span><span class="tile-text">5–6h</span></label>
+              <label class="tile-opt selected" onclick="markSelected(this,'sleep_group')"><input type="radio" name="sleep_hrs" value="7–8h" checked><span class="tile-icon">😌</span><span class="tile-text">7–8h</span></label>
+              <label class="tile-opt" onclick="markSelected(this,'sleep_group')"><input type="radio" name="sleep_hrs" value="8h+"><span class="tile-icon">😴</span><span class="tile-text">8h+</span></label>
+            </div>
+          </div>
+          <div><label class="field-label" style="margin-bottom:10px;">Alcohol consumption</label>
+            <div class="tile-select two-col" id="alcohol_group" style="margin-bottom:0;">
+              <label class="tile-opt selected" onclick="markSelected(this,'alcohol_group')"><input type="radio" name="alcohol" value="None" checked><span class="tile-icon">🚱</span><span class="tile-text">None</span></label>
+              <label class="tile-opt" onclick="markSelected(this,'alcohol_group')"><input type="radio" name="alcohol" value="Occasional (1–2 / wk)"><span class="tile-icon">🍷</span><span class="tile-text">Occasional</span></label>
+              <label class="tile-opt" onclick="markSelected(this,'alcohol_group')"><input type="radio" name="alcohol" value="Regular (3–5 / wk)"><span class="tile-icon">🍺</span><span class="tile-text">Regular</span></label>
+              <label class="tile-opt" onclick="markSelected(this,'alcohol_group')"><input type="radio" name="alcohol" value="Daily"><span class="tile-icon">⚠️</span><span class="tile-text">Daily</span></label>
+            </div>
+          </div>
+        </div>
+        <div class="phase-nav" style="margin-top:20px;"><button class="btn-back" onclick="goPhase(2)">← Back</button><span class="phase-counter">Step 3 of 6</span><button class="btn-next" onclick="goPhase(4)">Continue → Environment</button></div>
+      </div>
+
+      <!-- PHASE 4 -->
+      <div class="phase-panel" id="phase4">
+        <h2 class="phase-heading">Environment &amp; Location</h2>
+        <p class="phase-sub">Your location and sun exposure calibrate your pattern, Vitamin D guidance and lifestyle protocol, and set the right emergency numbers.</p>
+        <label class="field-label" style="margin-bottom:10px;">Your country</label>
+        <div class="tile-select" id="country_group" style="margin-bottom:6px;">
+          <label class="tile-opt" onclick="markSelected(this,'country_group')"><input type="radio" name="country" value="AE"><span class="tile-icon">🇦🇪</span><span class="tile-text">UAE</span></label>
+          <label class="tile-opt" onclick="markSelected(this,'country_group')"><input type="radio" name="country" value="SA"><span class="tile-icon">🇸🇦</span><span class="tile-text">Saudi</span></label>
+          <label class="tile-opt" onclick="markSelected(this,'country_group')"><input type="radio" name="country" value="QA"><span class="tile-icon">🇶🇦</span><span class="tile-text">Qatar</span></label>
+          <label class="tile-opt" onclick="markSelected(this,'country_group')"><input type="radio" name="country" value="KW"><span class="tile-icon">🇰🇼</span><span class="tile-text">Kuwait</span></label>
+          <label class="tile-opt" onclick="markSelected(this,'country_group')"><input type="radio" name="country" value="GB"><span class="tile-icon">🇬🇧</span><span class="tile-text">UK</span></label>
+          <label class="tile-opt" onclick="markSelected(this,'country_group')"><input type="radio" name="country" value="IN"><span class="tile-icon">🇮🇳</span><span class="tile-text">India</span></label>
+          <label class="tile-opt" onclick="markSelected(this,'country_group')"><input type="radio" name="country" value="PK"><span class="tile-icon">🇵🇰</span><span class="tile-text">Pakistan</span></label>
+          <label class="tile-opt" onclick="markSelected(this,'country_group')"><input type="radio" name="country" value="US"><span class="tile-icon">🇺🇸</span><span class="tile-text">USA</span></label>
+        </div>
+        <div class="field-error" id="err_country">Please choose your country.</div>
+        <label class="field-label" style="margin:14px 0 10px;">Daily outdoor sun exposure</label>
+        <div class="tile-select three-col" id="sun_group" style="margin-bottom:6px;">
+          <label class="tile-opt" onclick="markSelected(this,'sun_group')"><input type="radio" name="sun_exposure" value="Minimal"><span class="tile-icon">🏠</span><span class="tile-text">Minimal (AC / indoor)</span></label>
+          <label class="tile-opt" onclick="markSelected(this,'sun_group')"><input type="radio" name="sun_exposure" value="Moderate"><span class="tile-icon">⛅</span><span class="tile-text">Moderate (30 min+)</span></label>
+          <label class="tile-opt" onclick="markSelected(this,'sun_group')"><input type="radio" name="sun_exposure" value="High"><span class="tile-icon">☀️</span><span class="tile-text">High (outdoor work)</span></label>
+        </div>
+        <div class="field-error" id="err_sun">Please choose your sun exposure.</div>
+        <label class="field-label" style="margin:14px 0 10px;">Work environment</label>
+        <div class="tile-select three-col" id="work_group" style="margin-bottom:20px;">
+          <label class="tile-opt selected" onclick="markSelected(this,'work_group')"><input type="radio" name="work_env" value="Office" checked><span class="tile-icon">💻</span><span class="tile-text">Office / Desk</span></label>
+          <label class="tile-opt" onclick="markSelected(this,'work_group')"><input type="radio" name="work_env" value="Outdoor"><span class="tile-icon">🏗️</span><span class="tile-text">Outdoor / Physical</span></label>
+          <label class="tile-opt" onclick="markSelected(this,'work_group')"><input type="radio" name="work_env" value="Mixed"><span class="tile-icon">🔄</span><span class="tile-text">Mixed</span></label>
+        </div>
+        <div class="phase-nav"><button class="btn-back" onclick="goPhase(3)">← Back</button><span class="phase-counter">Step 4 of 6</span><button class="btn-next" onclick="goPhase(5)">Continue → Medications</button></div>
+      </div>
+
+      <!-- PHASE 5 -->
+      <div class="phase-panel" id="phase5">
+        <h2 class="phase-heading">Current Medications</h2>
+        <p class="phase-sub">Needed for drug–nutrient safety. If you take any prescription medication, a clinical reviewer checks your profile before a protocol can be released.</p>
+        <label class="field-label" style="margin-bottom:10px;">Are you currently taking prescription medication?</label>
+        <div class="tile-select two-col" id="meds_yesno" style="margin-bottom:6px;">
+          <label class="tile-opt" onclick="markSelected(this,'meds_yesno');toggleMedEntry(false)"><input type="radio" name="has_meds" value="No"><span class="tile-icon">✅</span><span class="tile-text">No medications</span></label>
+          <label class="tile-opt" onclick="markSelected(this,'meds_yesno');toggleMedEntry(true)"><input type="radio" name="has_meds" value="Yes"><span class="tile-icon">💊</span><span class="tile-text">Yes — on medication</span></label>
+        </div>
+        <div class="field-error" id="err_meds">Please answer this question.</div>
+        <div id="medEntryPanel" style="display:none;margin:14px 0;">
+          <label class="field-label" for="a_medications">List your medications</label>
+          <textarea id="a_medications" rows="4" placeholder="e.g. Metformin 1000mg twice daily, Amlodipine 5mg, Omeprazole 20mg once daily"></textarea>
+          <span class="field-hint">One per line or comma-separated. Include the dose if you know it.</span>
+          <div class="field-error" id="err_medlist" style="margin-top:8px;">Please list at least one medication.</div>
+          <div class="notice warn" style="margin-top:10px;">⏳ <strong>Clinical review first:</strong> no protocol is generated until a clinical reviewer has checked your medications. Your request is added to a review queue and you receive a reference.</div>
+        </div>
+        <div id="noMedNote" class="notice info" style="display:none;margin-top:14px;">✅ No medications reported. Your protocol is generated straight after the assessment.</div>
+        <div class="phase-nav"><button class="btn-back" onclick="goPhase(4)">← Back</button><span class="phase-counter">Step 5 of 6</span><button class="btn-next" onclick="goPhase(6)">Continue → Final Signals</button></div>
+      </div>
+
+      <!-- PHASE 6 -->
+      <div class="phase-panel" id="phase6">
+        <h2 class="phase-heading">Subjective Signals</h2>
+        <p class="phase-sub">How have you felt over the past 2 weeks? These calibrate your cognitive, hormonal and pattern scoring.</p>
+        <div class="subjective-slider">
+          <div class="slider-header"><span class="slider-label">⚡ Daily Energy</span><span class="slider-value" id="lbl_energy_a">6 / 10</span></div>
+          <input type="range" id="a_energy" min="1" max="10" value="6" oninput="updateSliderLabels()">
+          <div class="slider-ticks"><span>1 Very Low</span><span>5 Average</span><span>10 Excellent</span></div>
+        </div>
+        <div class="subjective-slider">
+          <div class="slider-header"><span class="slider-label">🌙 Sleep Quality</span><span class="slider-value" id="lbl_sleep_a">6 / 10</span></div>
+          <input type="range" id="a_sleep_q" min="1" max="10" value="6" oninput="updateSliderLabels()">
+          <div class="slider-ticks"><span>1 Very Poor</span><span>5 Average</span><span>10 Excellent</span></div>
+        </div>
+        <div class="subjective-slider">
+          <div class="slider-header"><span class="slider-label">😮‍💨 Stress Level</span><span class="slider-value" id="lbl_stress_a">5 / 10</span></div>
+          <input type="range" id="a_stress" min="1" max="10" value="5" oninput="updateSliderLabels()">
+          <div class="slider-ticks"><span>1 Very Calm</span><span>5 Moderate</span><span>10 Overwhelming</span></div>
+        </div>
+        <div style="margin-bottom:18px;">
+          <label class="field-label" for="a_symptoms" style="margin-bottom:8px;">Any current urgent symptoms? (optional — safety screening)</label>
+          <textarea id="a_symptoms" rows="2" placeholder="e.g. chest pain, severe headache, breathlessness at rest, rectal bleeding. Leave blank if none." style="font-size:13px;min-height:70px;"></textarea>
+          <span class="field-hint">This lets the safety screen stop the assessment if a symptom needs urgent attention. It is a keyword check, not a medical assessment.</span>
+        </div>
+        <div class="notice info">✅ <strong>Ready.</strong> The Bio-OS runs: preliminary assessment → domain scoring → pattern and climate calibration → protocol assembly.</div>
+        <div class="phase-nav">
+          <button class="btn-back" onclick="goPhase(5)">← Back</button>
+          <span class="phase-counter">Step 6 of 6</span>
+          <button class="btn-next" id="generateBtn" onclick="runAssessment()" style="background:#0a5c30;">🧬 Generate Bio-OS Protocol</button>
+        </div>
+      </div>
+    </div><!-- /formCard -->
+
+    <div id="loadingOverlay" class="card">
+      <div class="spinner-dna">🧬</div>
+      <div class="loading-stage" id="loadingStage">Initialising Bio-OS...</div>
+      <div class="loading-bar-wrap"><div class="loading-bar" id="loadingBar"></div></div>
+      <div class="loading-sub">Safety screen · scoring · calibration</div>
+    </div>
+
+    <!-- DASHBOARD -->
+    <div id="dashboard">
+      <div class="coach-bar"><div class="coach-icon">🤖</div><div class="coach-text" id="disp_coach">—</div></div>
+      <div class="badge-lifecycle-row" id="badge_row"></div>
+
+      <div class="pae-urgent" id="paeUrgentCard" style="display:none;" role="alert">
+        <span class="pae-urgent-icon">🚨</span>
+        <div class="pae-urgent-title">Urgent Clinical Attention Required</div>
+        <div class="pae-urgent-msg" id="paeUrgentMsg">—</div>
+        <div class="pae-urgent-msg" style="margin-top:10px;font-size:12px;">If you are in immediate danger, call your local emergency number now. No supplement protocol has been generated.</div>
+        <div class="pae-ref" id="paeUrgentRefRow" style="display:none;">Reference: <span id="paeUrgentRef">—</span></div>
+      </div>
+
+      <div class="pae-hold" id="paeHoldCard" style="display:none;">
+        <div class="pae-hold-title">⏳ Clinical Review Needed</div>
+        <div class="pae-hold-msg" id="paeHoldMsg">—</div>
+        <div class="pae-ref" id="paeHoldRefRow" style="display:none;">Reference: <span id="paeHoldRef">—</span></div>
+        <button class="cta-btn secondary" style="margin-top:14px;" id="reviewStatusBtn" onclick="checkReviewStatus()">Check review status</button>
+        <div class="pae-hold-msg" id="reviewStatusOut" style="margin-top:10px;font-size:12px;"></div>
+      </div>
+
+      <div class="pbu-card" id="pbuCard" style="display:none;">
+        <div class="pbu-title">🔬 Provisional Biological Understanding</div>
+        <div class="pbu-narrative" id="disp_pbu">—</div>
+        <div class="pbu-confidence"><span id="disp_confidence_pct">72</span>% confidence
+          <div class="pbu-confidence-bar"><div class="pbu-confidence-fill" id="pbuConfFill" style="width:72%"></div></div>
+        </div>
+      </div>
+
+      <div class="tcm-card" id="tcmCard" style="display:none;">
+        <div class="tcm-title">🌿 Current Biological Pattern</div>
+        <div class="tcm-pattern-label" id="disp_tcm_label">—</div>
+        <div class="tcm-narrative" id="disp_tcm_narrative">—</div>
+        <div class="tcm-climate-note" id="disp_tcm_climate">—</div>
+      </div>
+
+      <div class="stats-row" id="statsRow">
+        <div class="stat-tile" id="tile_score"><div class="stat-label">Biological Load</div><div class="stat-value" id="disp_score">—</div><div class="stat-sub">/100 · lower is better</div></div>
+        <div class="stat-tile" id="tile_bioage"><div class="stat-label">Biological Age</div><div class="stat-value" id="disp_bioage">—</div><div class="stat-sub">years (estimate)</div></div>
+        <div class="stat-tile" id="tile_momentum"><div class="stat-label">Momentum</div><div class="stat-value" id="disp_momentum">—</div><div class="stat-sub" id="disp_momentum_sub">+ means improving</div></div>
+      </div>
+      <div class="meta-row" id="metaRow">
+        <div class="meta-tile"><div class="meta-label">Cycle</div><div class="meta-value" id="disp_cycle">—</div></div>
+        <div class="meta-tile"><div class="meta-label">90d Proj.</div><div class="meta-value" id="disp_proj">—</div></div>
+        <div class="meta-tile"><div class="meta-label">Multiplier</div><div class="meta-value" id="disp_mult">—</div></div>
+        <div class="meta-tile"><div class="meta-label">Responsiveness</div><div class="meta-value" id="disp_resp">—</div></div>
+      </div>
+
+      <div class="gap-card" id="gapCard" style="display:none;">
+        <div class="gap-card-header" id="gapCardHeader" onclick="toggleGapCard()">
+          <div class="gap-card-title">🧪 Sharpen Your Protocol<span class="gap-count-badge" id="gapCountBadge">—</span></div>
+          <span class="gap-toggle" id="gapToggleIcon">▼ Show</span>
+        </div>
+        <div class="gap-card-body" id="gapCardBody">
+          <div class="depth-banner"><span style="font-size:15px;flex-shrink:0;">📊</span><span id="depthMessage">Your protocol can be sharpened with additional lab data.</span></div>
+          <div id="testRecList"></div>
+        </div>
+      </div>
+
+      <div class="narrative-card" id="narrativeCard">
+        <div class="narrative-title">🧬 Twin Evolution Summary</div>
+        <div class="narrative-main" id="narr_main">—</div>
+        <div class="narrative-sub" id="narr_sub"></div>
+      </div>
+
+      <div class="chart-wrap" id="chartWrap"><div class="card-title">6-Domain Load Map</div><canvas id="twinRadar"></canvas></div>
+      <div class="card" id="protocolSection"><div class="stack-header">☀️ Morning Stack (AM)</div><div id="am_list"></div></div>
+      <div class="card" id="protocolSectionPM"><div class="stack-header">🌙 Evening Stack (PM)</div><div id="pm_list"></div></div>
+      <div class="card" id="lifestyleCard"><div class="stack-header">🥗 Lifestyle Engine</div><div id="life_list"></div></div>
+      <button class="reset-btn" onclick="resetAssessment()">↩ New Assessment</button>
+    </div>
+  </div><!-- /assessTab -->
+
+  <!-- CHECK-IN -->
+  <div id="checkinTab" style="display:none;">
+    <div class="card">
+      <h2 class="tab-heading">Recalibrate My Twin</h2>
+      <p class="tab-sub">Behaviour signals update your trajectory without a full assessment. You need a completed assessment first.</p>
+      <div class="ci-user-note"><strong>Signed in as:</strong> <span id="ci_user_display">—</span></div>
+      <div id="checkinError"></div>
+      <div class="preview-card">
+        <div class="preview-title">Today's Twin Response — Live Preview</div>
+        <div class="preview-grid">
+          <div class="preview-tile"><div class="preview-tile-label">Responsiveness</div><div class="preview-tile-val" id="prev_resp">1.0</div><div class="preview-tile-sub" id="prev_resp_label">Neutral</div></div>
+          <div class="preview-tile"><div class="preview-tile-label">Momentum Effect</div><div class="preview-tile-val" id="prev_mfx">→ Steady</div><div class="preview-tile-sub">Trajectory modifier</div></div>
+          <div class="preview-tile"><div class="preview-tile-label">Trajectory</div><div class="preview-tile-val" id="prev_traj">→</div><div class="preview-tile-sub" id="prev_traj_label">Stable</div></div>
+        </div>
+        <div class="preview-stmt" id="prev_stmt">If you submit today: your Twin will recalibrate with a Neutral trajectory.</div>
+      </div>
+      <div class="slider-group"><div class="slider-header"><span class="slider-label">⚡ Daily Energy</span><span class="slider-value" id="lbl_energy">7 / 10</span></div><input type="range" id="ci_energy" min="1" max="10" value="7" oninput="updatePreview()"><div class="slider-ticks"><span>1</span><span>5</span><span>10</span></div></div>
+      <div class="slider-group"><div class="slider-header"><span class="slider-label">🌙 Sleep Quality</span><span class="slider-value" id="lbl_sleep">7 / 10</span></div><input type="range" id="ci_sleep" min="1" max="10" value="7" oninput="updatePreview()"><div class="slider-ticks"><span>1</span><span>5</span><span>10</span></div></div>
+      <div class="slider-group"><div class="slider-header"><span class="slider-label">😮‍💨 Stress Level</span><span class="slider-value" id="lbl_stress">4 / 10</span></div><input type="range" id="ci_stress" min="1" max="10" value="4" oninput="updatePreview()"><div class="slider-ticks"><span>1</span><span>5</span><span>10</span></div></div>
+      <div class="slider-group"><div class="slider-header"><span class="slider-label">💊 Protocol Adherence</span><span class="slider-value" id="lbl_adherence">80 %</span></div><input type="range" id="ci_adherence" min="1" max="10" value="8" oninput="updatePreview()"><div class="slider-ticks"><span>10%</span><span>50%</span><span>100%</span></div></div>
+      <button class="cta-btn" id="checkinBtn" onclick="runCheckin()">Recalibrate My Twin</button>
+      <div id="ci_loading" style="display:none;text-align:center;padding:30px 0;"><div class="spinner-dna" style="font-size:36px;">🔄</div><div class="loading-stage">Recalibrating...</div></div>
+      <div id="ci_result" style="display:none;margin-top:14px;" class="card"><div class="card-title">Twin Recalibrated</div><div id="ci_result_body" style="font-size:13px;line-height:1.7;color:var(--ink);"></div></div>
+    </div>
+  </div>
+
+  <!-- LABS -->
+  <div id="labsTab" style="display:none;">
+    <div class="card">
+      <h2 class="tab-heading">Lab Reports</h2>
+      <p class="tab-sub">Upload a blood-test report (PDF, JPG, PNG or WebP). An AI service reads the values, then they are compared with the reference ranges held by Phytomedix.</p>
+      <div class="notice warn">⚠️ <strong>Check the values.</strong> AI can misread a report. Always compare what is shown here with your original report before acting on it. This is not a diagnosis.</div>
+      <label class="consent-row" style="margin-bottom:14px;">
+        <input type="checkbox" id="lab_ai_consent" onchange="updateLabButton()">
+        <span>I understand my lab report will be sent to an AI service to read the values, and that I must check the results against my report.</span>
+      </label>
+      <div class="dropzone">
+        <div style="font-size:32px;margin-bottom:10px;">📄</div>
+        <input type="file" id="lab_file_input" accept="application/pdf,image/jpeg,image/png,image/webp" multiple style="margin-bottom:12px;font-family:'Outfit',sans-serif;max-width:100%;">
+        <div class="field-hint" style="margin-bottom:12px;">Up to 5 files per upload, 7 MB each. Limit: 5 uploads per 6 hours.</div>
+        <button class="cta-btn" id="uploadLabBtn" onclick="uploadLabReport()" style="max-width:260px;margin:0 auto;" disabled>Read my report</button>
+      </div>
+      <div id="lab_loading" style="display:none;text-align:center;padding:20px 0;">
+        <div class="spinner-dna" style="font-size:36px;">🤖</div>
+        <div class="loading-stage" id="lab_loading_stage">Reading your report...</div>
+        <div class="loading-sub">This usually takes 5–20 seconds per file.</div>
+      </div>
+      <div id="lab_results" style="display:none;"></div>
+    </div>
+  </div>
+
+  <!-- WEARABLES -->
+  <div id="wearablesTab" style="display:none;">
+    <div class="card">
+      <h2 class="tab-heading">Wearable Data</h2>
+      <p class="tab-sub">Readings received from your smart ring. Your ring syncs through the Phytomedix mobile app; this page shows what has arrived.</p>
+
+      <div id="wearableLoading" style="text-align:center;padding:20px;display:none;">
+        <div class="spinner-dna" style="font-size:36px;">⌚</div>
+        <div class="loading-stage">Loading your readings...</div>
+      </div>
+
+      <div id="wearableMessage" class="notice" style="display:none;"></div>
+
+      <div id="wearableContent" style="display:none;">
+        <div class="stats-row" style="grid-template-columns:1fr 1fr;">
+          <div class="stat-tile"><div class="stat-label">HRV</div><div class="stat-value" id="w_hrv">—</div><div class="stat-sub">ms</div></div>
+          <div class="stat-tile"><div class="stat-label">Resting HR</div><div class="stat-value" id="w_hr">—</div><div class="stat-sub">bpm</div></div>
+        </div>
+        <div class="stats-row" style="grid-template-columns:1fr 1fr;">
+          <div class="stat-tile"><div class="stat-label">Sleep Score</div><div class="stat-value" id="w_sleep">—</div><div class="stat-sub">device score, /100</div></div>
+          <div class="stat-tile"><div class="stat-label">SpO₂</div><div class="stat-value" id="w_spo2">—</div><div class="stat-sub">%</div></div>
+        </div>
+        <div class="field-hint" id="w_fresh" style="margin-bottom:12px;"></div>
+        <div class="card-title" style="margin-top:6px;">Recent readings</div>
+        <div class="table-scroll"><table class="data-table"><thead><tr><th>Measured</th><th>HRV</th><th>HR</th><th>Sleep</th><th>SpO₂</th><th>Source</th></tr></thead><tbody id="w_rows"></tbody></table></div>
+      </div>
+
+      <div style="margin-top:16px;"><button class="cta-btn secondary" onclick="loadWearableData()">↻ Refresh</button></div>
+
+      <div class="notice" style="margin-top:16px;">
+        <label class="consent-row">
+          <input type="checkbox" id="w_consent" onchange="onWearableConsent()">
+          <span id="w_consent_text"></span>
+        </label>
+      </div>
+
+      <div class="debug-bar" id="wearableDebug" style="display:none;">
+        <strong>Debug:</strong> send a mock reading (source = mock). Needs the consent box ticked.
+        <button class="cta-btn secondary" style="margin-top:8px;" onclick="sendMockReading()">Send test reading</button>
+        <div id="wearableDebugOut" style="margin-top:8px;font-size:12px;"></div>
+      </div>
+    </div>
+  </div>
+</div><!-- /mainApp -->
+
+<div class="site-footer">Phytomedix provides general wellness information. It is not a medical diagnosis or a substitute for advice from your doctor.</div>
+
+<script>
+// ════════════════════════════════════════════════════════════
+// CONFIG — set GAS_URL to the /exec URL of the v32.1 web app deployment.
+// ════════════════════════════════════════════════════════════
+var GAS_URL = "https://script.google.com/macros/s/AKfycbzrQhJd3oYJwSXOrNArmjyhEkABZtNG4I7djv4QFXxNphtWf7M8y86PIzgkKe_cq992oQ/exec";
+var DEBUG = /[?&]debug=1/.test(location.search);
+
+// Wearable consent wording (version label is sent with every reading). Counsel to approve.
+var WEARABLE_CONSENT_VERSION = "1.0-PoC";
+var WEARABLE_CONSENT_TEXT = "I consent to share my wearable data (HRV, HR, sleep, SpO2) with Phytomedix. I understand it is stored in a Google Sheet accessible only to the Phytomedix team, and that I can withdraw consent by unticking this box. I can ask for my data to be deleted by emailing privacy@phytomedix.com.";
+
+var LAB_MAX_FILES = 5;
+var LAB_MAX_BYTES = 7 * 1024 * 1024;   // the API accepts about 7.8 MB of file once base64-encoded
+var LAB_TYPES = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp'];
+
+function apiConfigured() { return GAS_URL.indexOf('PASTE_') === -1; }
+
+// ════════════════════════════════════════════════════════════
+// HELPERS
+// ════════════════════════════════════════════════════════════
+function esc(s) { return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+function $(id) { return document.getElementById(id); }
+function show(id, on, disp) { var el = $(id); if (el) el.style.display = on ? (disp || 'block') : 'none'; }
+function setText(id, t) { var el = $(id); if (el) el.textContent = t; }
+function scrollToEl(el) { try { if (el && el.scrollIntoView) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (e) {} }
+
+function friendlyError(reason) {
+  if (reason === 'timeout') return 'The request timed out. Please try again.';
+  if (reason === 'network') return 'Network problem. Please check your connection and try again.';
+  if (reason === 'not_configured') return 'This page is not connected to the service yet.';
+  if (reason === 'rate_limited' || reason === 'RATE_LIMITED') return 'Too many requests. Please wait a little and try again.';
+  if (reason === 'service_unavailable' || reason === 'SERVICE_UNAVAILABLE') return 'The service is being updated. Please try again shortly.';
+  if (reason === 'busy' || reason === 'BUSY') return 'The system is busy. Please try again in a moment.';
+  if (reason === 'forbidden' || reason === 'FORBIDDEN') return 'This request was refused. Please sign out and in again.';
+  if (reason === 'NO_TWIN_STATE') return 'Please complete a full assessment first.';
+  return 'Something went wrong. Please try again.';
+}
+
+function showPanelError(targetId, reason) {
+  var host = $(targetId);
+  if (!host) return;
+  var html = '<div class="notice alert" role="alert"><strong>' + esc(friendlyError(reason)) + '</strong>';
+  if (DEBUG) html += '<br><span style="font-family:\'DM Mono\',monospace;font-size:11px;">debug: ' + esc(reason) + '</span>';
+  html += '<br><button onclick="this.parentNode.remove()" style="margin-top:8px;padding:8px 14px;border:none;border-radius:8px;background:#1a3d2b;color:#fff;cursor:pointer;">Dismiss</button></div>';
+  host.innerHTML = html;
+}
+function clearPanelError(targetId) { var h = $(targetId); if (h) h.innerHTML = ''; }
+
+// ════════════════════════════════════════════════════════════
+// SESSION (sessionStorage: cleared when the tab closes)
+// ════════════════════════════════════════════════════════════
+var Session = {
+  save: function (t, u, e) { sessionStorage.setItem('phyto_token', t); sessionStorage.setItem('phyto_user_id', u); sessionStorage.setItem('phyto_expires_at', e); },
+  get: function () { return { token: sessionStorage.getItem('phyto_token'), userId: sessionStorage.getItem('phyto_user_id'), expiresAt: sessionStorage.getItem('phyto_expires_at') }; },
+  clear: function () { sessionStorage.removeItem('phyto_token'); sessionStorage.removeItem('phyto_user_id'); sessionStorage.removeItem('phyto_expires_at'); sessionStorage.removeItem('phyto_w_consent_at'); },
+  isValid: function () { var s = this.get(); if (!s.token || !s.expiresAt) return false; return new Date(s.expiresAt) > new Date(); }
+};
+
+// ════════════════════════════════════════════════════════════
+// SCREENS
+// ════════════════════════════════════════════════════════════
+function showLoginScreen(msg) {
+  show('loginScreen', true); show('registerScreen', false); show('regSuccessScreen', false); show('mainApp', false);
+  show('logoutBtn', false);
+  $('sessionIndicator').className = 'session-indicator';
+  var e = $('loginError');
+  if (msg) { e.textContent = msg; e.style.cssText = 'display:block;'; }
+  else { e.style.display = 'none'; }
+}
+function showRegisterScreen() {
+  show('loginScreen', false); show('registerScreen', true); show('regSuccessScreen', false); show('mainApp', false);
+  show('logoutBtn', false);
+  $('sessionIndicator').className = 'session-indicator';
+  regCurrentStep = 1;
+  for (var i = 1; i <= 3; i++) {
+    var p = $('rpanel_' + i), s = $('rstep_' + i);
+    if (p) p.classList.toggle('active', i === 1);
+    if (s) { s.classList.remove('active', 'done'); if (i === 1) s.classList.add('active'); }
+  }
+  show('regError', false);
+}
+function showMainApp() {
+  show('loginScreen', false); show('registerScreen', false); show('regSuccessScreen', false); show('mainApp', true);
+  show('logoutBtn', true, 'block');
+  $('sessionIndicator').className = 'session-indicator active';
+  setText('ci_user_display', Session.get().userId || '');
+  show('dashboard', false); show('formCard', true); show('loadingOverlay', false);
+  clearPanelError('assessError');
+  currentPhase = 1; goPhase(1);
+  $('w_consent_text').textContent = WEARABLE_CONSENT_TEXT;
+  $('w_consent').checked = false;
+  show('wearableDebug', DEBUG);
+  startSessionWatcher();
+}
+
+// ════════════════════════════════════════════════════════════
+// LOGIN / LOGOUT / WATCHER
+// ════════════════════════════════════════════════════════════
+function handleLogin() {
+  var emailEl = $('login_email'), pinEl = $('login_pin'), errEl = $('loginError'), btn = $('loginBtn');
+  var email = emailEl.value.trim(), pin = pinEl.value.trim();
+  errEl.style.display = 'none';
+  emailEl.classList.remove('error'); pinEl.classList.remove('error');
+  if (!email || email.indexOf('@') === -1) { emailEl.classList.add('error'); emailEl.focus(); errEl.textContent = 'Please enter a valid email address.'; errEl.style.display = 'block'; return; }
+  if (!pin || pin.length < 4) { pinEl.classList.add('error'); pinEl.focus(); errEl.textContent = 'Please enter your PIN.'; errEl.style.display = 'block'; return; }
+  btn.disabled = true; btn.textContent = 'Signing in...';
+  postToGAS({ action: 'login', user_id: email, pin: pin }, 20000)
+    .then(function (d) {
+      btn.disabled = false; btn.textContent = 'Sign In →';
+      if (d && d.status === 'ok' && d.token) { Session.save(d.token, d.user_id, d.expires_at); pinEl.value = ''; showMainApp(); }
+      else {
+        var msgs = {
+          'INVALID_CREDENTIALS': 'Incorrect email or PIN. Please try again.',
+          'ACCOUNT_LOCKED': (d && d.message) || 'Account temporarily locked. Please try again later.',
+          'ACCOUNT_DISABLED': 'This account is not active. Please contact support.',
+          'MISSING_CREDENTIALS': 'Please enter both email and PIN.',
+          'SERVICE_UNAVAILABLE': 'The service is being updated. Please try again shortly.'
+        };
+        errEl.textContent = msgs[d && d.code] || 'Sign-in failed. Please try again.'; errEl.style.display = 'block';
+      }
+    })
+    .catch(function (err) { btn.disabled = false; btn.textContent = 'Sign In →'; errEl.textContent = friendlyError(err); errEl.style.display = 'block'; });
+}
+
+function handleLogout() {
+  var s = Session.get();
+  if (s.token) postToGAS({ action: 'logout', user_id: s.userId, token: s.token }, 8000).catch(function () {});
+  Session.clear();
+  showLoginScreen('You have been signed out.');
+}
+
+var _sw = null;
+function startSessionWatcher() {
+  if (_sw) clearInterval(_sw);
+  _sw = setInterval(function () {
+    var s = Session.get(); if (!s.token) return;
+    var ms = new Date(s.expiresAt) - new Date();
+    if (ms <= 0) { clearInterval(_sw); Session.clear(); showLoginScreen('Your session ended. Please sign in again.'); return; }
+    show('sessionWarning', ms <= 300000);
+  }, 10000);
+}
+
+// ════════════════════════════════════════════════════════════
+// API
+// ════════════════════════════════════════════════════════════
+function callAPI(action, extra, ms) {
+  if (!Session.isValid()) { Session.clear(); showLoginScreen('Your session ended. Please sign in again.'); return Promise.reject('session_expired'); }
+  var s = Session.get(), p = {};
+  if (extra) for (var k in extra) { if (extra.hasOwnProperty(k)) p[k] = extra[k]; }
+  p.action = action; p.user_id = s.userId; p.token = s.token;
+  return postToGAS(p, ms || 30000).then(function (d) {
+    var code = d && d.code;
+    if (code === 'SESSION_EXPIRED' || code === 'MISSING_TOKEN') { Session.clear(); showLoginScreen('Your session ended. Please sign in again.'); throw 'session_expired'; }
+   if (code === 'SERVICE_UNAVAILABLE') throw (d && d.message ? d.message : 'service_unavailable');
+    if (code === 'RATE_LIMITED') throw 'rate_limited';
+    if (code === 'BUSY') throw 'busy';
+    if (code === 'FORBIDDEN') throw 'forbidden';
+    return d;
+  });
+}
+
+function postToGAS(payload, ms) {
+  return new Promise(function (res, rej) {
+    if (!apiConfigured()) { rej('not_configured'); return; }
+    var ctrl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+    var t = setTimeout(function () { if (ctrl) ctrl.abort(); rej('timeout'); }, ms || 30000);
+    fetch(GAS_URL, { method: 'POST', redirect: 'follow', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(payload), signal: ctrl ? ctrl.signal : undefined })
+      .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+      .then(function (d) { clearTimeout(t); res(d); })
+      .catch(function (e) { clearTimeout(t); rej((e && e.name === 'AbortError') ? 'timeout' : 'network'); });
+  });
+}
+
+// ════════════════════════════════════════════════════════════
+// INIT
+// ════════════════════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', function () {
+  var pe = $('login_pin'); if (pe) pe.addEventListener('keydown', function (e) { if (e.key === 'Enter') handleLogin(); });
+  var ee = $('login_email'); if (ee) ee.addEventListener('keydown', function (e) { if (e.key === 'Enter') { var p = $('login_pin'); if (p) p.focus(); } });
+  document.querySelectorAll('input[name="sex"]').forEach(function (r) { r.addEventListener('change', syncSexDependentFields); });
+  if (!apiConfigured()) { showLoginScreen('This page is not connected to the service yet (GAS_URL is not set).'); }
+  else if (Session.isValid()) showMainApp(); else { Session.clear(); showLoginScreen(); }
+  initSelectedTiles();
+  updatePreview();
+});
+
+// ════════════════════════════════════════════════════════════
+// LOADING STAGES
+// ════════════════════════════════════════════════════════════
+var STAGES = ['Running safety screen...', 'Scanning for red flags...', 'Building biological understanding...', 'Running 6-domain scoring...', 'Applying climate calibration...', 'Classifying functional pattern...', 'Querying ingredient catalogue...', 'Applying safety checks...', 'Assembling protocol...', 'Saving your Twin State...'];
+var _si = 0, _st = null;
+function startStages() { _si = 0; setText('loadingStage', STAGES[0]); $('loadingBar').style.width = '5%'; _st = setInterval(function () { _si = (_si + 1) % STAGES.length; setText('loadingStage', STAGES[_si]); $('loadingBar').style.width = Math.round((_si / STAGES.length) * 90 + 5) + '%'; }, 700); }
+function stopStages() { clearInterval(_st); $('loadingBar').style.width = '100%'; }
+
+// ════════════════════════════════════════════════════════════
+// UI HELPERS
+// ════════════════════════════════════════════════════════════
+function markSelected(el, gid) {
+  var g = $(gid); if (!g) return;
+  var items = g.querySelectorAll('.radio-opt,.tile-opt');
+  for (var i = 0; i < items.length; i++) items[i].classList.remove('selected');
+  el.classList.add('selected');
+}
+function toggleSignal(el) { setTimeout(function () { var cb = el.querySelector('input[type="checkbox"]'); if (cb) el.classList.toggle('selected', cb.checked); }, 0); }
+function initSelectedTiles() {
+  var checked = document.querySelectorAll('input[type="radio"]:checked');
+  for (var i = 0; i < checked.length; i++) { var l = checked[i].closest('.radio-opt,.tile-opt'); if (l) l.classList.add('selected'); }
+}
+function checkedVal(name) { var el = document.querySelector('input[name="' + name + '"]:checked'); return el ? el.value : ''; }
+
+function switchTab(t) {
+  show('assessTab', t === 'assess'); show('checkinTab', t === 'checkin'); show('labsTab', t === 'labs'); show('wearablesTab', t === 'wearables');
+  ['assess', 'checkin', 'labs', 'wearables'].forEach(function (n) { $('tab_' + n).classList.toggle('active', t === n); });
+  if (t === 'wearables') loadWearableData();
+}
+
+function toggleMedEntry(showMeds) {
+  show('medEntryPanel', showMeds);
+  show('noMedNote', !showMeds);
+  show('err_meds', false);
+}
+
+function syncSexDependentFields() {
+  var female = checkedVal('sex') === 'Female';
+  var mf = $('field_menopause'); if (mf) mf.style.display = female ? 'flex' : 'none';
+  show('pregnancy_block', female);
+  show('err_sex', false);
+}
+
+// ════════════════════════════════════════════════════════════
+// PHASE WIZARD — 6 phases with validation of the answers that drive safety
+// ════════════════════════════════════════════════════════════
+var currentPhase = 1;
+function goPhase(n) {
+  if (n > currentPhase && !validatePhase(currentPhase)) return;
+  for (var i = 1; i <= 6; i++) {
+    var p = $('phase' + i); if (p) p.classList.toggle('active', i === n);
+    var s = $('pstep_' + i); if (!s) continue;
+    s.classList.remove('active', 'done');
+    if (i < n) s.classList.add('done');
+    if (i === n) s.classList.add('active');
+  }
+  if (n === 2) syncSexDependentFields();
+  currentPhase = n;
+  scrollToEl($('formCard'));
+}
+
+function validatePhase(n) {
+  var ok = true;
+  if (n === 1) {
+    var ageEl = $('a_age'), age = parseInt(ageEl.value) || 0;
+    if (age < 18 || age > 100) { ageEl.classList.add('error'); ageEl.focus(); ok = false; } else ageEl.classList.remove('error');
+    if (!checkedVal('sex')) { show('err_sex', true); ok = false; } else show('err_sex', false);
+  }
+  if (n === 2) {
+    if (checkedVal('sex') === 'Female' && !checkedVal('pregnant')) { show('err_preg', true); ok = false; } else show('err_preg', false);
+  }
+  if (n === 4) {
+    if (!checkedVal('country')) { show('err_country', true); ok = false; } else show('err_country', false);
+    if (!checkedVal('sun_exposure')) { show('err_sun', true); ok = false; } else show('err_sun', false);
+  }
+  if (n === 5) {
+    var hm = checkedVal('has_meds');
+    if (!hm) { show('err_meds', true); ok = false; } else show('err_meds', false);
+    if (hm === 'Yes') {
+      var ta = $('a_medications');
+      if (ta.value.trim().length < 3) { ta.classList.add('error'); show('err_medlist', true); ok = false; } else { ta.classList.remove('error'); show('err_medlist', false); }
+    }
+  }
+  return ok;
+}
+
+function updateSliderLabels() {
+  setText('lbl_energy_a', $('a_energy').value + ' / 10');
+  setText('lbl_sleep_a', $('a_sleep_q').value + ' / 10');
+  setText('lbl_stress_a', $('a_stress').value + ' / 10');
+}
+
+// ════════════════════════════════════════════════════════════
+// RUN ASSESSMENT
+// ════════════════════════════════════════════════════════════
+function runAssessment() {
+  if (!Session.isValid()) { showLoginScreen('Your session ended. Please sign in.'); return; }
+  for (var v = 1; v <= 5; v++) { if (!validatePhase(v)) { goPhase(v); return; } }
+  clearPanelError('assessError');
+
+  var q10 = [];
+  var condMap = [
+    ['sym_diabetes', 'Diabetes Type 2'], ['sym_bp', 'Hypertension'], ['sym_chol', 'High Cholesterol'], ['sym_obesity', 'Obesity / Weight Management'],
+    ['sym_brain', 'Brain Fog'], ['sym_anxiety', 'Anxiety / Chronic Stress'], ['sym_joints', 'Joint Pain / Arthritis'], ['sym_gut', 'IBS / Digestive Issues'],
+    ['sym_hormone', 'Hormonal Imbalance / Low Libido'], ['sym_menopause', 'Menopause'], ['sym_thyroid', 'Thyroid / Hypothyroid'], ['sym_copd', 'COPD / Asthma']
+  ];
+  condMap.forEach(function (pair) { var el = $(pair[0]); if (el && el.checked) q10.push(pair[1]); });
+
+  var female = checkedVal('sex') === 'Female';
+  var hasMeds = checkedVal('has_meds');
+  var payload = {
+    'Q-001': $('a_age').value,
+    'Q-002': checkedVal('sex'),
+    'Q-003': checkedVal('smoking') || 'Never',
+    'Q-019': $('a_height').value,
+    'Q-021': $('a_weight').value,
+    'Q-010': q10.join('; '),
+    'Q-006': checkedVal('sleep_hrs') || '7–8h',
+    'Q-007': checkedVal('diet') || 'Balanced',
+    'Q-exercise': checkedVal('exercise') || '1–2x / week',
+    'Q-alcohol': checkedVal('alcohol') || 'None',
+    'Q-country': checkedVal('country'),
+    'Q-sun': checkedVal('sun_exposure'),
+    'Q-work-env': checkedVal('work_env') || 'Office',
+    'Q-has-meds': hasMeds,
+    'Q-medications': hasMeds === 'Yes' ? $('a_medications').value.trim() : '',
+    'Q-023': $('a_energy').value,
+    'Q-sleep-qual': $('a_sleep_q').value,
+    'Q-stress': $('a_stress').value,
+    'Q-symptoms': $('a_symptoms').value.trim()
+  };
+  if (female) payload['Q-pregnant'] = checkedVal('pregnant');
+
+  show('formCard', false); show('loadingOverlay', true);
+  startStages();
+
+  callAPI('run_engine', payload, 40000)
+    .then(function (data) {
+      stopStages(); show('loadingOverlay', false);
+      if (data && data.status === 'success' && data.output) renderDashboard(data.output);
+      else { show('formCard', true); showPanelError('assessError', (data && data.code) || 'engine_error'); }
+    })
+    .catch(function (err) {
+      stopStages(); show('loadingOverlay', false);
+      if (err !== 'session_expired') { show('formCard', true); showPanelError('assessError', err); }
+    });
+}
+
+// ════════════════════════════════════════════════════════════
+// DASHBOARD
+// ════════════════════════════════════════════════════════════
+var _radarChart = null;
+
+function resetDashboard() {
+  ['paeUrgentCard', 'paeHoldCard', 'pbuCard', 'tcmCard', 'gapCard'].forEach(function (id) { show(id, false); });
+  ['disp_score', 'disp_bioage', 'disp_momentum', 'disp_cycle', 'disp_proj', 'disp_mult', 'disp_resp'].forEach(function (id) { setText(id, '—'); });
+  $('disp_momentum').style.color = '';
+  $('tile_score').className = 'stat-tile'; $('tile_bioage').className = 'stat-tile'; $('tile_momentum').className = 'stat-tile';
+  $('am_list').innerHTML = ''; $('pm_list').innerHTML = ''; $('life_list').innerHTML = ''; $('testRecList').innerHTML = '';
+  $('badge_row').innerHTML = ''; $('narr_sub').innerHTML = ''; setText('narr_main', '—');
+  setText('reviewStatusOut', ''); show('paeHoldRefRow', false); show('paeUrgentRefRow', false);
+  if (_radarChart) { try { _radarChart.destroy(); } catch (e) {} _radarChart = null; }
+}
+
+function setDashMode(mode) {
+  var full = mode === 'full';
+  ['statsRow', 'metaRow', 'narrativeCard', 'chartWrap', 'protocolSection', 'protocolSectionPM', 'lifestyleCard'].forEach(function (id) { show(id, full); });
+}
+
+function renderDashboard(twin) {
+  resetDashboard();
+  show('dashboard', true);
+  var dec = twin.paeDecision || 'GENERATE_NOW';
+
+  if (dec === 'WITHHOLD_URGENT') {
+    setDashMode('urgent');
+    show('paeUrgentCard', true);
+    setText('paeUrgentMsg', twin.patientMessage || 'Please seek immediate medical attention.');
+    if (twin.reviewRef) { setText('paeUrgentRef', twin.reviewRef); show('paeUrgentRefRow', true); }
+    setText('disp_coach', 'Your answers flagged a symptom that needs urgent attention. No supplement protocol has been generated.');
+    $('badge_row').innerHTML = '<span class="evo-badge urgent">🚨 URGENT REVIEW</span>';
+    showPBU(twin);
+    scrollToEl($('dashboard'));
+    return;
+  }
+
+  if (dec === 'HOLD_FOR_CONSULT') {
+    setDashMode('hold');
+    show('paeHoldCard', true);
+    setText('paeHoldMsg', twin.patientMessage || 'A clinical reviewer needs to check your profile before any protocol is released. No protocol has been generated.');
+    if (twin.reviewRef) { setText('paeHoldRef', twin.reviewRef); show('paeHoldRefRow', true); }
+    setText('disp_coach', 'A clinical reviewer needs to check your medications first. No protocol has been generated yet.');
+    $('badge_row').innerHTML = '<span class="evo-badge stable">⏳ UNDER REVIEW</span>';
+    showPBU(twin);
+    scrollToEl($('dashboard'));
+    return;
+  }
+
+  setDashMode('full');
+  setText('disp_coach', twin.coachMessage || '');
+  var evo = String(twin.evolutionStatus || 'baseline').toLowerCase();
+  var lifecycle = twin.lifecycle || '';
+  var resp = parseFloat(twin.responsiveness) || 1.0;
+  var ri = respToLabel(resp);
+  var evoMap = { baseline: { icon: '◎', label: 'BASELINE' }, improving: { icon: '↑', label: 'IMPROVING' }, stable: { icon: '→', label: 'STABLE' }, declining: { icon: '↓', label: 'DECLINING' } };
+  var badge = evoMap[evo] || evoMap.baseline;
+  if (!evoMap[evo]) evo = 'baseline';
+  var lcClass = lifecycle === 'Recovery Needed' ? ' recovery' : lifecycle === 'Recalibrating' ? ' recalib' : '';
+  var rClass = resp >= 1.1 ? 'accelerating' : resp >= 1.0 ? 'neutral' : resp >= 0.8 ? 'slowed' : 'stagnating';
+  $('badge_row').innerHTML =
+    '<span class="evo-badge ' + evo + '">' + badge.icon + ' ' + badge.label + '</span>' +
+    (lifecycle ? '<span class="lifecycle-pill' + lcClass + '">⬡ ' + esc(lifecycle) + '</span>' : '') +
+    '<span class="resp-badge ' + rClass + '">⚡ ' + resp.toFixed(1) + 'x ' + esc(ri.label) + '</span>';
+
+  renderScoreTiles(twin, evo);
+  renderNarrative(evo, parseFloat(twin.momentum) || 0, resp, twin.projection90d, twin.overallScore);
+  showPBU(twin); showTCM(twin);
+  if (twin.scores) renderRadar(twin.scores);
+  if (twin.protocol) { renderStack(twin.protocol.AM, 'am_list', twin.protocolNote); renderStack(twin.protocol.PM, 'pm_list', ''); }
+  renderLifestyle(twin.lifestyle || []);
+  renderGapCard(twin);
+  scrollToEl($('dashboard'));
+}
+
+function renderScoreTiles(twin, evo) {
+  setText('disp_score', twin.overallScore == null ? '—' : twin.overallScore);
+  setText('disp_bioage', twin.biologicalAge == null ? '—' : twin.biologicalAge);
+  $('tile_score').className = 'stat-tile ' + evo; $('tile_bioage').className = 'stat-tile ' + evo;
+  var mom = parseFloat(twin.momentum) || 0, momEl = $('disp_momentum');
+  if (evo === 'baseline') { momEl.textContent = '—'; setText('disp_momentum_sub', 'first run'); }
+  else {
+    var arr = mom > 3 ? '↑' : (mom < -3 ? '↓' : '→');
+    momEl.textContent = arr + ' ' + (mom > 0 ? '+' : '') + mom;
+    momEl.style.color = mom > 3 ? 'var(--improving)' : (mom < -3 ? 'var(--declining)' : 'var(--stable)');
+    $('tile_momentum').className = 'stat-tile ' + evo;
+    setText('disp_momentum_sub', '+ means improving');
+  }
+  setText('disp_cycle', 'C' + (twin.cycleNumber || 1));
+  setText('disp_proj', (twin.projection90d === undefined || twin.projection90d === null ? '—' : twin.projection90d) + '/100');
+  setText('disp_mult', (parseFloat(twin.multiplier) || 1.0).toFixed(1) + 'x');
+  setText('disp_resp', (parseFloat(twin.responsiveness) || 1.0).toFixed(1) + 'x');
+}
+
+function showPBU(twin) {
+  if (!twin.pbuNarrative) return;
+  show('pbuCard', true);
+  setText('disp_pbu', twin.pbuNarrative);
+  var conf = Math.max(0, Math.min(100, parseInt(twin.paeConfidence) || 72));
+  setText('disp_confidence_pct', conf);
+  $('pbuConfFill').style.width = conf + '%';
+}
+
+function showTCM(twin) {
+  if (!twin.tcmPattern) return;
+  show('tcmCard', true);
+  setText('disp_tcm_label', twin.tcmPattern.label || '');
+  setText('disp_tcm_narrative', twin.tcmPattern.narrative || '');
+  setText('disp_tcm_climate', twin.climateNarrative || '');
+}
+
+function renderNarrative(evo, mom, resp, proj, score) {
+  var main = {
+    baseline: 'Your Bio-OS has been initialised. Your biological load map and pattern are now active.',
+    improving: 'Your load is falling. Your biological patterns are showing a positive response.',
+    stable: 'Your system is maintaining stability. Sustained adherence over this cycle builds forward momentum.',
+    declining: 'Your load has risen since the last run. Review sleep, stress and adherence, and consider speaking to your clinician.'
+  };
+  setText('narr_main', main[evo] || main.baseline);
+  var bt = resp >= 1.1 ? 'High consistency is amplifying your improvement potential.' : resp >= 1.0 ? 'Your consistency is maintaining steady progress.' : resp >= 0.8 ? 'Reduced adherence is slowing optimisation.' : 'Low engagement is limiting gains.';
+  var mt = mom > 3 ? 'Load is falling: gains are accelerating.' : mom < -3 ? 'Load is rising: the system is in a recalibration phase.' : 'The system remains in a stabilisation phase.';
+  var pn = parseFloat(proj), sc = parseFloat(score);
+  var pt = (isNaN(pn) || isNaN(sc)) ? 'A 90-day projection appears after your second run.' : (pn < sc ? 'Projection: load falling over the next 90 days.' : pn === sc ? 'Projection: stable.' : 'Projection: load rising; consider intervention.');
+  $('narr_sub').innerHTML = '<span>⚡ ' + esc(bt) + '</span><span>📈 ' + esc(mt) + '</span><span>🎯 ' + esc(pt) + '</span>';
+}
+
+function renderRadar(scores) {
+  if (typeof Chart === 'undefined') return;
+  var canvas = $('twinRadar'); if (!canvas || !canvas.getContext) return;
+  var ctx = canvas.getContext('2d');
+  if (_radarChart) { try { _radarChart.destroy(); } catch (e) {} }
+  _radarChart = new Chart(ctx, { type: 'radar', data: { labels: ['Metabolic', 'Cardio', 'Cognitive', 'Joints', 'Gut', 'Hormonal'], datasets: [{ label: 'Domain Load', data: [scores.metabolic, scores.cardio, scores.cognitive, scores.joints, scores.gut, scores.hormonal], backgroundColor: 'rgba(46,125,79,0.13)', borderColor: '#2e7d4f', pointBackgroundColor: '#2e7d4f', pointBorderColor: '#fff', borderWidth: 2, pointRadius: 4 }] }, options: { responsive: true, scales: { r: { min: 0, max: 100, ticks: { display: false }, grid: { color: 'rgba(0,0,0,0.06)' }, pointLabels: { font: { family: 'Outfit', size: 11, weight: '600' }, color: '#4a5568' } } }, plugins: { legend: { display: false } } } });
+}
+
+function renderStack(list, cid, note) {
+  var el = $(cid);
+  if (!list || list.length === 0) {
+    el.innerHTML = '<div class="empty-stack">' + esc(note || 'No items for this time block.') + '</div>';
+    return;
+  }
+  el.innerHTML = list.map(function (item) {
+    var dp = [item.dose || '']; if (item.final_dose_mg) dp.push(item.final_dose_mg + 'mg');
+    var hasWarn = item.safety && item.safety !== 'None noted';
+    return '<div class="supp-card' + (item.caution ? ' caution' : '') + '"><div class="supp-top"><span class="supp-name">' + esc(item.name) + '</span><span class="supp-dose-tag">' + esc(dp.join(' · ')) + '</span></div>' +
+      (item.caution ? '<span class="supp-caution-tag">⚠ Interaction caution</span>' : '') +
+      (item.hero ? '<span class="supp-hero">&ldquo;' + esc(item.hero) + '&rdquo;</span>' : '') +
+      (item.ingredients ? '<span class="supp-ing">🧪 ' + esc(item.ingredients) + '</span>' : '') +
+      '<details class="clinical-details"' + (item.caution ? ' open' : '') + '><summary>Clinical rationale</summary><div class="clinical-body">' +
+      (item.why ? '<div class="clinical-row"><strong>Mechanism:</strong> ' + esc(item.why) + '</div>' : '') +
+      (hasWarn ? '<div class="clinical-row warn"><strong>Safety note:</strong> ' + esc(item.safety) + '</div>' : '') +
+      (item.contraindications && item.contraindications !== 'None' ? '<div class="clinical-row warn"><strong>Contraindications:</strong> ' + esc(item.contraindications) + '</div>' : '') +
+      '</div></details></div>';
+  }).join('');
+}
+
+function renderLifestyle(list) {
+  var el = $('life_list');
+  if (!list || list.length === 0) { el.innerHTML = ''; return; }
+  el.innerHTML = list.map(function (l) { return '<div class="life-card"><span class="life-cat">' + esc(l.category || '') + '</span><div class="life-title">' + esc(l.title || '') + '</div><div class="life-text">' + esc(l.text || '') + '</div></div>'; }).join('');
+}
+
+function toggleGapCard() {
+  var b = $('gapCardBody'), ic = $('gapToggleIcon'), h = $('gapCardHeader'), open = b.classList.contains('open');
+  b.classList.toggle('open', !open); h.classList.toggle('has-body', !open); ic.textContent = open ? '▼ Show' : '▲ Hide';
+}
+
+function renderGapCard(twin) {
+  var gaps = twin.gaps || [], recs = twin.testRecommendations || [];
+  if (gaps.length === 0) { show('gapCard', false); return; }
+  show('gapCard', true);
+  setText('gapCountBadge', gaps.length + (gaps.length === 1 ? ' test' : ' tests'));
+  var p1 = twin.p1GapCount || 0;
+  $('depthMessage').innerHTML = p1 > 0 ? '<strong>Protocol running at reduced depth.</strong> ' + p1 + ' priority test' + (p1 > 1 ? 's' : '') + ' would unlock fuller calibration.' : '<strong>Your protocol can be sharpened.</strong> The tests below would confirm domains currently estimated from lifestyle signals.';
+  if (p1 > 0) { $('gapCardBody').classList.add('open'); $('gapCardHeader').classList.add('has-body'); setText('gapToggleIcon', '▲ Hide'); }
+  $('testRecList').innerHTML = (recs.length > 0 ? recs : gaps).map(function (r) {
+    var pc = String(r.priority || 'P3').toLowerCase().replace(/[^a-z0-9]/g, '');
+    if (r.panel_name) {
+      return '<div class="test-rec-card"><div class="test-rec-top"><span class="test-rec-name">' + esc(r.panel_name) + '</span><span class="priority-pill ' + pc + '">' + esc(r.priority) + '</span></div>' + (r.biomarkers ? '<div class="test-rec-biomarkers">🧪 ' + esc(r.biomarkers) + '</div>' : '') + '<div class="test-rec-reason">' + esc(r.reason) + '</div><div class="test-rec-meta">' + (r.estimated_cost ? '<span class="test-meta-tag">💰 AED ' + esc(r.estimated_cost) + '</span>' : '') + '<span class="test-meta-tag">📍 ' + esc(r.domain) + '</span></div>' + (r.how_to_get_tested ? '<div class="test-rec-how">📋 <strong>How to get tested:</strong> ' + esc(r.how_to_get_tested) + '</div>' : '') + '</div>';
+    }
+    var dl = String(r.domain || ''); dl = dl.charAt(0).toUpperCase() + dl.slice(1);
+    return '<div class="test-rec-card"><div class="test-rec-top"><span class="test-rec-name">' + esc(dl) + ' Panel</span><span class="priority-pill ' + pc + '">' + esc(r.priority) + '</span></div><div class="test-rec-reason">' + esc(r.reason) + '</div></div>';
+  }).join('');
+}
+
+// ── Review status (for held assessments) ─────────────────────
+var REVIEW_TEXT = {
+  PENDING: 'Waiting for a clinical reviewer.',
+  IN_REVIEW: 'A clinical reviewer is looking at your profile.',
+  RELEASED: 'Review complete. Please contact Phytomedix, quoting your reference, about next steps.',
+  ESCALATED: 'Referred for further clinical follow-up. You will be contacted.',
+  CLOSED: 'This review has been closed.'
+};
+function checkReviewStatus() {
+  var btn = $('reviewStatusBtn'); btn.disabled = true;
+  setText('reviewStatusOut', 'Checking...');
+  callAPI('review_status', {}, 20000)
+    .then(function (d) {
+      btn.disabled = false;
+      if (d && d.status === 'ok' && d.item) {
+        var st = String(d.item.status || '');
+        setText('reviewStatusOut', 'Status: ' + st.replace('_', ' ') + '. ' + (REVIEW_TEXT[st] || ''));
+      } else if (d && d.status === 'ok') setText('reviewStatusOut', 'No review item found for your account.');
+      else setText('reviewStatusOut', friendlyError('error'));
+    })
+    .catch(function (err) { btn.disabled = false; if (err !== 'session_expired') setText('reviewStatusOut', friendlyError(err)); });
+}
+
+function resetAssessment() {
+  resetDashboard(); show('dashboard', false); show('formCard', true);
+  clearPanelError('assessError');
+  currentPhase = 1; goPhase(1);
+}
+
+// ════════════════════════════════════════════════════════════
+// CHECK-IN
+// ════════════════════════════════════════════════════════════
+function runCheckin() {
+  if (!Session.isValid()) { showLoginScreen('Your session ended. Please sign in.'); return; }
+  clearPanelError('checkinError');
+  var ad = parseInt($('ci_adherence').value) * 10;
+  var p = { adherence: ad, energy_score: $('ci_energy').value, sleep_quality: $('ci_sleep').value, stress_level: $('ci_stress').value };
+  show('checkinBtn', false); show('ci_loading', true); show('ci_result', false);
+  callAPI('checkin', p, 20000)
+    .then(function (data) {
+      show('ci_loading', false); show('checkinBtn', true);
+      if (data && data.status === 'success' && data.output) {
+        var out = data.output, r = parseFloat(out.responsiveness) || 1.0, m = parseFloat(out.momentum) || 0;
+        $('ci_result_body').innerHTML = '<strong>Cycle ' + esc(out.cycleNumber || '—') + ' recorded.</strong><br><br>Responsiveness: <strong>' + esc(respToLabel(r).label) + '</strong> (' + r.toFixed(1) + 'x)<br>Trajectory: <strong>' + esc(out.lifecycle || '—') + '</strong><br>90-day projection: <strong>' + esc(out.projection90d === undefined ? '—' : out.projection90d) + '/100</strong> (lower is better)<br>Momentum: <strong>' + (m >= 0 ? '+' : '') + m + '</strong> (+ means improving)<br><br><em>' + esc(out.coachMessage || '') + '</em>';
+        show('ci_result', true);
+      } else showPanelError('checkinError', (data && data.code) || 'engine_error');
+    })
+    .catch(function (err) { show('ci_loading', false); show('checkinBtn', true); if (err !== 'session_expired') showPanelError('checkinError', err); });
+}
+
+function updatePreview() {
+  var a = parseInt($('ci_adherence').value) * 10;
+  setText('lbl_energy', $('ci_energy').value + ' / 10'); setText('lbl_sleep', $('ci_sleep').value + ' / 10'); setText('lbl_stress', $('ci_stress').value + ' / 10'); setText('lbl_adherence', a + ' %');
+  var r = calcR(a), i = respToLabel(r);
+  setText('prev_resp', r.toFixed(1)); setText('prev_resp_label', i.label); setText('prev_mfx', i.mfx); setText('prev_traj', i.traj); setText('prev_traj_label', i.trajLabel);
+  setText('prev_stmt', 'If you submit today: your Twin will recalibrate with a ' + i.label + ' trajectory.');
+}
+function calcR(a) { if (a >= 90) return 1.1; if (a >= 70) return 1.0; if (a >= 50) return 0.8; return 0.6; }
+function respToLabel(r) {
+  if (r >= 1.1) return { label: 'Accelerating', mfx: '↑ Compounding', traj: '↗', trajLabel: 'Improving' };
+  if (r >= 1.0) return { label: 'Neutral', mfx: '→ Steady', traj: '→', trajLabel: 'Stable' };
+  if (r >= 0.8) return { label: 'Slowed', mfx: '↓ Drag', traj: '→', trajLabel: 'Slowing' };
+  return { label: 'Stagnating', mfx: '⬇ Blocked', traj: '↘', trajLabel: 'At Risk' };
+}
+
+// ════════════════════════════════════════════════════════════
+// REGISTRATION
+// ════════════════════════════════════════════════════════════
+var regCurrentStep = 1;
+function goRegStep(n) {
+  if (n > regCurrentStep && !validateRegStep(regCurrentStep)) return;
+  for (var i = 1; i <= 3; i++) {
+    var p = $('rpanel_' + i), s = $('rstep_' + i);
+    if (p) p.classList.toggle('active', i === n);
+    if (!s) continue;
+    s.classList.remove('active', 'done'); if (i < n) s.classList.add('done'); if (i === n) s.classList.add('active');
+  }
+  if (n === 3) { setText('confirm_email', $('r_email').value.trim()); setText('confirm_name', $('r_name').value.trim() || '(not provided)'); show('regError', false); }
+  regCurrentStep = n;
+}
+function validateRegStep(n) {
+  if (n === 1) { var e = $('r_email'); var v = e.value.trim(); if (!v || v.indexOf('@') === -1 || v.indexOf('.') === -1) { e.classList.add('error'); e.focus(); return false; } e.classList.remove('error'); return true; }
+  if (n === 2) {
+    var p = $('r_pin'), pc = $('r_pin_confirm');
+    if (!p.value || p.value.length < 6) { p.classList.add('error'); p.focus(); return false; }
+    if (p.value !== pc.value) { pc.classList.add('error'); $('pinMatchMsg').textContent = '✗ PINs do not match'; $('pinMatchMsg').className = 'pin-match-msg nomatch'; pc.focus(); return false; }
+    return true;
+  }
+  return true;
+}
+function checkPinStrength() {
+  var p = $('r_pin').value, f = $('pinStrengthFill'), l = $('pinStrengthText');
+  if (!p) { f.style.width = '0'; l.textContent = ''; return; }
+  var sc = 0; if (p.length >= 6) sc++; if (p.length >= 8) sc++; if (p.length >= 10) sc++; if (/[^0-9]/.test(p)) sc++;
+  if (sc <= 1) { f.style.width = '33%'; f.style.background = '#c53030'; l.textContent = 'Weak'; l.className = 'pin-strength-text weak'; }
+  else if (sc <= 2) { f.style.width = '66%'; f.style.background = '#d97706'; l.textContent = 'Moderate'; l.className = 'pin-strength-text medium'; }
+  else { f.style.width = '100%'; f.style.background = '#4caf71'; l.textContent = 'Strong'; l.className = 'pin-strength-text strong'; }
+  checkPinMatch();
+}
+function checkPinMatch() {
+  var p = $('r_pin').value, pc = $('r_pin_confirm').value, m = $('pinMatchMsg'), ce = $('r_pin_confirm');
+  if (!pc) { m.textContent = ''; m.className = 'pin-match-msg'; return; }
+  if (p === pc) { m.textContent = '✓ PINs match'; m.className = 'pin-match-msg match'; ce.classList.remove('error'); ce.classList.add('success'); }
+  else { m.textContent = '✗ PINs do not match'; m.className = 'pin-match-msg nomatch'; ce.classList.remove('success'); ce.classList.add('error'); }
+}
+function submitRegistration() {
+  var email = $('r_email').value.trim(), name = $('r_name').value.trim(), pin = $('r_pin').value.trim();
+  var errEl = $('regError'), btn = $('createBtn');
+  errEl.style.display = 'none'; btn.disabled = true; btn.innerHTML = '<span class="btn-spinner"></span>Creating...';
+  postToGAS({ action: 'register', email: email, name: name, pin: pin }, 20000)
+    .then(function (d) {
+      btn.disabled = false; btn.textContent = 'Create Account';
+      if (d && d.status === 'ok') { showRegSuccess(pin, email); }
+      else {
+        var msgs = {
+          'USER_EXISTS': 'An account with this email already exists. Please sign in.',
+          'INVALID_EMAIL': 'Please enter a valid email address.',
+          'PIN_TOO_SHORT': 'PIN must be at least 6 characters.',
+          'INVALID_PIN': 'PIN must be 20 characters or fewer.',
+          'RATE_LIMITED': 'Too many sign-ups right now. Please try again later.',
+          'BUSY': 'The system is busy. Please try again in a moment.',
+          'SERVICE_UNAVAILABLE': 'The service is being updated. Please try again shortly.'
+        };
+        errEl.textContent = msgs[d && d.code] || 'Registration failed. Please try again.'; errEl.style.display = 'block';
+      }
+    })
+    .catch(function (err) { btn.disabled = false; btn.textContent = 'Create Account'; errEl.textContent = friendlyError(err); errEl.style.display = 'block'; });
+}
+function showRegSuccess(pin, email) {
+  show('registerScreen', false); show('regSuccessScreen', true);
+  setText('success_pin_display', pin);
+  var le = $('login_email'); if (le) le.value = email;
+  try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch (e) {}
+}
+function afterRegSuccess() {
+  setText('success_pin_display', '——————');
+  show('regSuccessScreen', false); show('loginScreen', true);
+  var e = $('loginError'); e.textContent = '✓ Account created. Sign in with your email and PIN.'; e.style.cssText = 'display:block;background:#f0fdf4;border-color:#bbf7d0;color:#166534;';
+}
+
+// ════════════════════════════════════════════════════════════
+// LABS
+// ════════════════════════════════════════════════════════════
+function updateLabButton() { $('uploadLabBtn').disabled = !$('lab_ai_consent').checked; }
+
+function readFileAsBase64(file) {
+  return new Promise(function (resolve, reject) {
+    var reader = new FileReader();
+    reader.onload = function (e) { var s = String(e.target.result || ''); var i = s.indexOf(','); resolve(i === -1 ? '' : s.substring(i + 1)); };
+    reader.onerror = function () { reject('read_failed'); };
+    reader.readAsDataURL(file);
+  });
+}
+
+function labErrorText(err) {
+  var m = {
+    rate_limited: 'Upload limit reached (5 uploads per 6 hours). Please try again later.',
+    service_unavailable: 'The service is being updated. Please try again shortly.',
+    busy: 'The system is busy. Please try again.',
+    timeout: 'This file took too long to read. Please try again.',
+    network: 'Network problem while uploading this file.',
+    read_failed: 'Your browser could not read this file.',
+    forbidden: 'This request was refused. Please sign in again.'
+  };
+  return m[err] || friendlyError(err);
+}
+
+async function uploadLabReport() {
+  if (!Session.isValid()) { showLoginScreen('Your session ended. Please sign in.'); return; }
+  if (!$('lab_ai_consent').checked) { return; }
+  var input = $('lab_file_input');
+  var files = Array.prototype.slice.call(input.files || []);
+  if (!files.length) { renderLabResults([{ name: '', ok: false, message: 'Please choose at least one file.' }]); return; }
+  var results = [];
+  if (files.length > LAB_MAX_FILES) { results.push({ name: '', ok: false, message: 'Only the first ' + LAB_MAX_FILES + ' files are processed in one upload.' }); files = files.slice(0, LAB_MAX_FILES); }
+
+  var btn = $('uploadLabBtn'); btn.style.display = 'none';
+  show('lab_loading', true); show('lab_results', false);
+
+  for (var i = 0; i < files.length; i++) {
+    var f = files[i];
+    setText('lab_loading_stage', 'Reading file ' + (i + 1) + ' of ' + files.length + '...');
+    if (LAB_TYPES.indexOf(f.type) === -1) { results.push({ name: f.name, ok: false, message: 'Unsupported file type. Use PDF, JPG, PNG or WebP.' }); continue; }
+    if (f.size > LAB_MAX_BYTES) { results.push({ name: f.name, ok: false, message: 'File is larger than 7 MB.' }); continue; }
+       try {
+      var b64 = await readFileAsBase64(f);
+      var s = Session.get();
+      
+      var rawRes = await postToGAS({
+        action: 'upload_and_extract_labs',
+        user_id: s.userId,
+        token: s.token,
+        fileData: b64,
+        mimeType: f.type
+      }, 70000);
+
+      if (rawRes && (rawRes.status === 'success' || rawRes.status === 'ok')) {
+        results.push({ name: f.name, ok: true, data: rawRes });
+      } else {
+        results.push({ name: f.name, ok: false, message: (rawRes && rawRes.message) ? rawRes.message : (rawRes && rawRes.code) ? rawRes.code : 'Failed to read.' });
+      }
+    } catch (err) {
+      if (err === 'session_expired') { btn.style.display = 'block'; show('lab_loading', false); return; }
+      results.push({ name: f.name, ok: false, message: typeof err === 'string' ? err : 'Network error.' });
+      if (err === 'rate_limited') break;
+    }
+  }
+  btn.style.display = 'block'; show('lab_loading', false);
+  input.value = '';
+  renderLabResults(results);
+}
+
+function renderLabResults(results) {
+  var box = $('lab_results');
+  if (!box) return;
+  box.style.display = 'block';
+  var html = '';
+
+  // Ensure results is an array (in case a single object was passed)
+  var resArray = Array.isArray(results) ? results : [results];
+
+  resArray.forEach(function (r) {
+    if (!r) return;
+    
+    // Handle error states returned in the results wrapper
+    if (r.ok === false) {
+      html += '<div class="file-result failed"><div class="file-result-name">' + esc(r.name || 'Upload') + '</div><div class="notice alert" style="margin:0;">' + esc(r.message || 'Unknown error') + '</div></div>';
+      return;
+    }
+
+    // Handle direct API response or wrapped result object
+    var d = r.data || r;
+    var vals = (d && typeof d.extracted_data === 'object' && d.extracted_data !== null) ? d.extracted_data : {};
+    var keys = Object.keys(vals);
+    
+    var fileName = r.name || 'Lab Report';
+    html += '<div class="file-result"><div class="file-result-name">' + esc(fileName) + '</div>';
+    html += '<div class="notice warn">Read by AI. Please check these values against your original report.</div>';
+    
+    if (d.clinician_referral_triggered) {
+      html += '<div class="notice alert"><strong>A value may be critically out of range.</strong> Check it against your report and contact your doctor promptly if confirmed. Do not change any medication on this basis.</div>';
+    }
+
+    if (keys.length > 0) {
+      html += '<div class="table-scroll"><table class="data-table"><thead><tr><th>Biomarker</th><th>Value read</th></tr></thead><tbody>';
+      keys.forEach(function (k) { 
+        html += '<tr><td>' + esc(k) + '</td><td>' + esc(vals[k]) + '</td></tr>'; 
+      });
+      html += '</tbody></table></div>';
+    } else {
+      html += '<div class="notice">No values could be read from this file.</div>';
+    }
+
+    var compared = parseInt(d.evaluated_count) || 0;
+    var notEval = Array.isArray(d.not_evaluated) ? d.not_evaluated : [];
+    
+    html += '<div class="field-hint" style="margin:10px 0;">' + compared + ' value' + (compared === 1 ? '' : 's') + ' compared with our reference ranges' + (notEval.length ? '; ' + notEval.length + ' not compared (no range held): ' + esc(notEval.join(', ')) : '') + '.</div>';
+
+    var insights = Array.isArray(d.insights) ? d.insights : [];
+    if (insights.length > 0) {
+      insights.forEach(function (t) { 
+        html += '<div class="narrative-card" style="margin-bottom:8px;"><div class="narrative-main" style="margin:0;">💡 ' + esc(t) + '</div></div>'; 
+      });
+    } else if (compared > 0) {
+      html += '<div class="notice info">No compared value was outside the ranges we hold.</div>';
+    } else if (keys.length > 0) {
+      html += '<div class="notice">None of the values could be compared with our reference ranges.</div>';
+    }
+
+    var flags = Array.isArray(d.clinical_flags) ? d.clinical_flags : [];
+    flags.forEach(function (fl) { 
+      if (fl) {
+        html += '<div class="pae-urgent" style="padding:14px;margin-bottom:8px;"><div class="pae-urgent-title" style="font-size:14px;">⚠️ Flag: ' + esc(fl.domain || 'general') + '</div><div class="pae-urgent-msg" style="font-size:12px;">' + esc(fl.reason || '') + '</div></div>'; 
+      }
+    });
+    
+    html += '</div>';
+  });
+
+  box.innerHTML = '<div class="card-title">Results</div>' + html;
+  scrollToEl(box);
+}
+
+// ════════════════════════════════════════════════════════════
+// WEARABLES (reads the signed-in user's own rows through the API)
+// ════════════════════════════════════════════════════════════
+function wearableConsent() {
+  var at = sessionStorage.getItem('phyto_w_consent_at');
+  return at ? { at: at, version: WEARABLE_CONSENT_VERSION } : null;
+}
+function onWearableConsent() {
+  if ($('w_consent').checked) { if (!sessionStorage.getItem('phyto_w_consent_at')) sessionStorage.setItem('phyto_w_consent_at', new Date().toISOString()); }
+  else sessionStorage.removeItem('phyto_w_consent_at');
+}
+
+function showWearableMessage(text, kind) {
+  var el = $('wearableMessage'); el.className = 'notice' + (kind ? ' ' + kind : ''); el.textContent = text; el.style.display = 'block';
+}
+
+function loadWearableData() {
+  show('wearableLoading', true); show('wearableContent', false); show('wearableMessage', false);
+  callAPI('get_biometrics', {}, 20000)
+    .then(function (data) {
+      show('wearableLoading', false);
+      if (!data || data.status !== 'ok' || !Array.isArray(data.rows)) { showWearableMessage('Could not load your wearable data. Please try again.', 'alert'); return; }
+      if (data.rows.length === 0) { showWearableMessage('No wearable readings yet. Sync your ring in the Phytomedix app and refresh.'); return; }
+      renderWearableRows(data.rows);
+    })
+    .catch(function (err) {
+      show('wearableLoading', false);
+      if (err === 'session_expired') return;
+      showWearableMessage(friendlyError(err), 'alert');
+    });
+}
+
+function fmtVal(v) { return (v === null || v === undefined || v === '') ? '—' : String(v); }
+
+function renderWearableRows(rows) {
+  var sorted = rows.slice().sort(function (a, b) { return String(b.measured_at || '').localeCompare(String(a.measured_at || '')); });
+  var latest = sorted[0];
+  setText('w_hrv', fmtVal(latest.hrv)); setText('w_hr', fmtVal(latest.resting_hr)); setText('w_sleep', fmtVal(latest.sleep_score)); setText('w_spo2', fmtVal(latest.spo2));
+  var t = Date.parse(String(latest.measured_at || ''));
+  if (!isNaN(t)) {
+    var mins = Math.max(0, Math.round((Date.now() - t) / 60000));
+    setText('w_fresh', 'Latest reading: ' + new Date(t).toLocaleString() + (mins < 60 ? ' (' + mins + ' min ago)' : mins < 2880 ? ' (' + Math.round(mins / 60) + ' h ago)' : ' (' + Math.round(mins / 1440) + ' days ago)'));
+  } else setText('w_fresh', '');
+  var body = '';
+  sorted.slice(0, 20).forEach(function (r) {
+    var tm = Date.parse(String(r.measured_at || ''));
+    body += '<tr><td>' + esc(isNaN(tm) ? fmtVal(r.measured_at) : new Date(tm).toLocaleString()) + '</td><td>' + esc(fmtVal(r.hrv)) + '</td><td>' + esc(fmtVal(r.resting_hr)) + '</td><td>' + esc(fmtVal(r.sleep_score)) + '</td><td>' + esc(fmtVal(r.spo2)) + '</td><td>' + esc(fmtVal(r.source)) + '</td></tr>';
+  });
+  $('w_rows').innerHTML = body;
+  show('wearableContent', true);
+}
+
+// Used by a future BLE bridge and by the debug button. Never sends without consent. No shared token.
+function submitWearableReading(reading) {
+  var consent = wearableConsent();
+  if (!consent) return Promise.reject('consent_required');
+  var measured = (reading.measuredAt instanceof Date ? reading.measuredAt : new Date()).toISOString();
+  var device = reading.deviceId || 'WEB-01';
+  var num = function (v) { return (v === undefined || v === null || isNaN(v)) ? null : Number(v); };
+  return callAPI('submit_metrics', {
+    reading_id: new Date(measured).getTime() + '_' + device,
+    device_id: device,
+    source: reading.source || 'web_ble',
+    measured_at: measured,
+    consent_at: consent.at,
+    consent_version: consent.version,
+    hrv: num(reading.hrv), resting_hr: num(reading.resting_hr), sleep_score: num(reading.sleep_score), spo2: num(reading.spo2)
+  }, 20000).then(function (d) {
+    if (d && d.status === 'ok') return d;
+    throw (d && d.code) || 'submit_failed';
+  });
+}
+
+function sendMockReading() {
+  var out = $('wearableDebugOut');
+  out.textContent = 'Sending...';
+  submitWearableReading({ hrv: 40 + Math.round(Math.random() * 30), resting_hr: 55 + Math.round(Math.random() * 15), sleep_score: 70 + Math.round(Math.random() * 20), spo2: 96 + Math.round(Math.random() * 3), deviceId: 'WEB-TEST', source: 'mock' })
+    .then(function (d) { out.textContent = d.duplicate ? 'Duplicate (already stored).' : 'Stored. Refreshing...'; loadWearableData(); })
+    .catch(function (err) { out.textContent = err === 'consent_required' ? 'Tick the consent box first.' : 'Failed: ' + String(err); });
+}
+</script>
+</body>
+</html>
